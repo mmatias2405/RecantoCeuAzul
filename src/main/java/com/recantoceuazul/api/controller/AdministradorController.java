@@ -2,9 +2,13 @@ package com.recantoceuazul.api.controller;
 
 import com.recantoceuazul.api.model.Administrador;
 import com.recantoceuazul.api.repository.AdministradorRepository;
+import com.recantoceuazul.api.dto.LoginRequest;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/administrador")
@@ -14,6 +18,16 @@ public class AdministradorController {
 
     public AdministradorController(AdministradorRepository repo) {
         this.repo = repo;
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        Optional<Administrador> adm = repo.findByEmailAndSenha(request.getEmail(), request.getSenha());
+        if (adm.isPresent()) {
+            return ResponseEntity.ok(adm.get().getId()); // retorna apenas o ID
+        } else {
+            return ResponseEntity.status(401).body("Credenciais inválidas");
+        }
     }
 
     @GetMapping
