@@ -46,8 +46,30 @@ Thumbs.db
 
 # --- Arquivos de configuração sensíveis ---
 # NUNCA suba essas configs reais
-application.properties
-application.yml
-application-dev.properties
 .env
-.env.*
+
+# --- Docker ---
+docker-compose.override.yml
+docker-compose*.env
+.docker/
+**/.docker/
+*.pid
+*.sock
+
+# Arquivos de volume/dados persistentes
+mysql_data/
+**/mysql_data/
+
+# Imagens criadas localmente (caso gere .tar com `docker save`)
+*.tar
+
+# Logs e outros arquivos gerados em containers
+*.log
+*.out
+
+# --- IDEs adicionais (caso use Eclipse ou outros) ---
+*.bak
+
+# --- Node.js (caso adicione frontend com npm/yarn no futuro) ---
+node_modules/
+dist/
