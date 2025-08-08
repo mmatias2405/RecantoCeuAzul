@@ -46,16 +46,18 @@
             </nav>
         </header>
         <main>
-            <form class="form-signin">
+            <form class="form-signin" method="post" action="/auth">
+                <div th:if="${mensagem}" th:text="${mensagem}" class="alert alert-danger" role="alert">
+                </div>
                 <h1 class="h3 mb-3 font-weight-normal">Por Favor, Faça o Login</h1>
                 <label for="inputEmail" class="sr-only">Email</label>
-                <input type="email" id="inputEmail" class="form-control" placeholder="Email" required autofocus>
+                <input type="email" name="email" id="inputEmail" class="form-control" placeholder="Email" required autofocus>
                 <label for="inputPassword" class="sr-only">Senha</label>
-                <input type="password" id="inputPassword" class="form-control" placeholder="Senha" required>
+                <input type="password" name="senha" id="inputPassword" class="form-control" placeholder="Senha" required>
                 <div class="mb-3 d-flex justify-content-center">
                     <button type="submit" class="btn btn-block btn-primary">Logar</button>
                 </div>
-              </form>
+            </form>
         </main>
         <footer>
             <!-- place footer here -->

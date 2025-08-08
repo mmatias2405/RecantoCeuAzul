@@ -21,7 +21,7 @@ public class AdministradorController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody Administrador request) {
         Optional<Administrador> adm = repo.findByEmailAndSenha(request.getEmail(), request.getSenha());
         if (adm.isPresent()) {
             return ResponseEntity.ok(adm.get().getId()); // retorna apenas o ID

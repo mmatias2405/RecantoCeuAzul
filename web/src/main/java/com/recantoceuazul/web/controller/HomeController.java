@@ -10,6 +10,19 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Arrays;
 import java.util.List;
@@ -51,6 +64,31 @@ public class HomeController {
     @GetMapping("/setor")
     public String setor(Model model) {
         return "registrarSetor";
+    }
+
+    @PostMapping("/auth")
+    public String auth(@ModelAttribute Administrador administrador, RedirectAttributes redirectAttributes) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Administrador> request = new HttpEntity<>(administrador, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(API_URL + "administrador/login", request, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                String id = response.getBody(); // o ID retornado como string
+                redirectAttributes.addFlashAttribute("mensagem", "Login bem-sucedido! ID: " + id);
+                return "redirect:/login"; // redireciona pra página inicial
+            }
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 401) {
+                redirectAttributes.addFlashAttribute("mensagem", "Credenciais inválidas!");
+                return "redirect:/login"; // redireciona de volta pro login
+            }
+        }
+
+        redirectAttributes.addFlashAttribute("mensagem", "Erro inesperado.");
+        return "redirect:/login";
     }
 
     @PostMapping("/salvar")
