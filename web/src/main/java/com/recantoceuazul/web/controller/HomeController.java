@@ -53,6 +53,9 @@ public class HomeController {
 
     @GetMapping("/consumo")
     public String consumo(Model model) {
+        ResponseEntity<Setor[]> responseSetor = restTemplate.getForEntity(API_URL + "setor", Setor[].class);
+        List<Setor> setores = Arrays.asList(responseSetor .getBody());
+        model.addAttribute("setores", setores);
         return "registrarConsumo";
     }
 
@@ -66,6 +69,31 @@ public class HomeController {
         return "registrarSetor";
     }
 
+    @PostMapping("/registrarconsumo")
+    public String registrarConsumo(@ModelAttribute Abastecimento abastecimento, RedirectAttributes redirectAttributes) {
+        //Administrador adm = new Administrador();
+        //adm.setId(1);
+        //abastecimento.setAdministrador(adm);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Abastecimento> request = new HttpEntity<>(abastecimento, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(API_URL + "abastecimentos", request, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                return "redirect:/"; // redireciona pra página inicial
+            }
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 401) {
+                redirectAttributes.addFlashAttribute("mensagem", "Houve um erro no Registro");
+                return "redirect:/consumo"; // redireciona de volta pro login
+            }
+        }
+
+        redirectAttributes.addFlashAttribute("mensagem", "Erro inesperado.");
+        return "redirect:/consumo";
+    }
     @PostMapping("/auth")
     public String auth(@ModelAttribute Administrador administrador, RedirectAttributes redirectAttributes) {
         HttpHeaders headers = new HttpHeaders();
