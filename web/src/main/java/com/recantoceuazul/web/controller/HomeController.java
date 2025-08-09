@@ -91,6 +91,7 @@ public class HomeController {
         redirectAttributes.addFlashAttribute("mensagem", "Erro inesperado.");
         return "redirect:/consumo";
     }
+    
     @PostMapping("/auth")
     public String auth(@ModelAttribute Administrador administrador, RedirectAttributes redirectAttributes) {
         HttpHeaders headers = new HttpHeaders();
@@ -115,13 +116,26 @@ public class HomeController {
         redirectAttributes.addFlashAttribute("mensagem", "Erro inesperado.");
         return "redirect:/login";
     }
-
-    @PostMapping("/salvar")
-    public String salvar(@ModelAttribute Administrador administrador) {
+    @PostMapping("/salvarsetor")
+    public String salvarSetor(@ModelAttribute Setor setor, RedirectAttributes redirectAttributes) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Administrador> request = new HttpEntity<>(administrador, headers);
-        restTemplate.postForEntity(API_URL, request, Administrador.class);
-        return "redirect:/";
+        HttpEntity<Setor> request = new HttpEntity<>(setor, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(API_URL + "setor", request, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                return "redirect:/"; // redireciona pra página inicial
+            }
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 401) {
+                redirectAttributes.addFlashAttribute("mensagem", "Houve um erro no Registro");
+                return "redirect:/setor"; // redireciona de volta pro login
+            }
+        }
+
+        redirectAttributes.addFlashAttribute("mensagem", "Erro inesperado.");
+        return "redirect:/setor";
     }
 }

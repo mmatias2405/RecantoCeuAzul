@@ -46,11 +46,12 @@
             </nav>
         </header>
         <main>
-            <form class="form-signin">
+            <form class="form-signin" action="/salvarsetor" method="post">
+                <div th:if="${mensagem}" th:text="${mensagem}" class="alert alert-danger" role="alert"></div>
                 <h1 class="h3 mb-3 font-weight-normal">Registrar Novo Setor</h1>
                 <div class="mb-3">
                 <label for="nomeSetor" class="sr-only">Insira o nome do setor</label>
-                <input type="text" id="nomeSetor" class="form-control" placeholder="Setor" required>
+                <input type="text" id="nomeSetor" name="nome" class="form-control" placeholder="Setor" required>
                 </div>
                 <div class="mb-3 d-flex justify-content-center">
                     <button type="submit" class="btn btn-block btn-primary">Registrar</button>
