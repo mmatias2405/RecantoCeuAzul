@@ -46,13 +46,13 @@
             </nav>
         </header>
         <main>
-            <form class="form-signin" id="formconsumo">
+            <form class="form-signin" id="formconsumo" method="post" action="/salvarconsumo">
                 <div th:if="${mensagem}" th:text="${mensagem}" class="alert alert-danger" role="alert">
                 </div>
                 <h1 class="h3 mb-3 font-weight-normal">Registro de Consumo</h1>
                 <div class="mb-3">
                     <label for="setor" class="form-label">Selecione o setor:</label>
-                    <select class="form-select" aria-label="Default select example" name="setor" id="setor">
+                    <select class="form-select" aria-label="Default select example" name="setor.id" id="setor">
                         <option th:each="s : ${setores}" 
                                 th:value="${s.id}" 
                                 th:text="${s.nome}">
@@ -80,42 +80,17 @@
                 </div>
                  <input type="hidden" name="horaInicio" id="horaInicio">
                  <input type="hidden" name="horaFim" id="horaFim">
-                 <input type="hidden" name="administrador" id="administrador">
+                 <input type="hidden" name="administrador.id" id="administrador">
               </form>
               <script>
                 document.getElementById('formconsumo').addEventListener('submit', function(e) {
-                    e.preventDefault();
                     const data = document.getElementById('data').value; // ex: 2025-08-08
                     const horaInicial = document.getElementById('horaInicial').value; // ex: 14:30
                     const horaFinal = document.getElementById('horaFinal').value;
-                    document.getElementById('horaInicio').value = `${data} ${horaInicial}:00`;
-                    document.getElementById('horaFim').value = `${data} ${horaFinal}:00`;
+                    document.getElementById('horaInicio').value = `${data}T${horaInicial}:00`;
+                    document.getElementById('horaFim').value = `${data}T${horaFinal}:00`;
                     document.getElementById('administrador').value = 1;
-                    const dados = {
-                        setor: { id: parseInt(document.getElementById('setor').value) },
-                        volumeAgua: parseFloat(document.getElementById('volume').value),
-                        horaInicio: document.getElementById('horaInicio').value,
-                        horaFim: document.getElementById('horaFim').value,
-                        administrador: { id: parseInt(document.getElementById('administrador').value) }
-                    };
-
-                    fetch('/registrarconsumo', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(dados)
-                    });
                 });
-                </script>
-              <script>
-                    const form = document.querySelector('form');
-                    form.addEventListener('submit', function () {
-                        const data = document.getElementById('data').value; // ex: 2025-08-08
-                        const horaInicial = document.getElementById('horaInicial').value; // ex: 14:30
-                        const horaFinal = document.getElementById('horaFinal').value;
-                        document.getElementById('horaInicio').value = `${data} ${horaInicial}:00`;
-                        document.getElementById('horaFim').value = `${data} ${horaFinal}:00`;
-                        document.getElementById('administrador').value = 1;
-                    });
                 </script>
         </main>
         <footer>

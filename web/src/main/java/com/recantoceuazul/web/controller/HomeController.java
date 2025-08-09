@@ -69,11 +69,8 @@ public class HomeController {
         return "registrarSetor";
     }
 
-    @PostMapping("/registrarconsumo")
-    public String registrarConsumo(@ModelAttribute Abastecimento abastecimento, RedirectAttributes redirectAttributes) {
-        //Administrador adm = new Administrador();
-        //adm.setId(1);
-        //abastecimento.setAdministrador(adm);
+    @PostMapping("/salvarconsumo")
+    public String salvarConsumo(@ModelAttribute Abastecimento abastecimento, RedirectAttributes redirectAttributes) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Abastecimento> request = new HttpEntity<>(abastecimento, headers);
