@@ -5,9 +5,10 @@ import java.time.LocalDateTime;
 public class Captacao {
     public Captacao() {}
     
-    public Captacao(Float volumeAgua, LocalDateTime hora) {
+    public Captacao(Float volumeAgua, LocalDateTime hora, Administrador administrador) {
         this.volumeAgua = volumeAgua;
         this.hora = hora;
+        this.administrador = administrador;
     }
 
     private Integer id;
@@ -15,6 +16,16 @@ public class Captacao {
     private Float volumeAgua;
 
     private LocalDateTime hora;
+
+    private Administrador administrador;
+
+    public Administrador getAdministrador() {
+        return administrador;
+    }
+
+    public void setAdministrador(Administrador administrador) {
+        this.administrador = administrador;
+    }
 
     public Integer getId() {
         return id;

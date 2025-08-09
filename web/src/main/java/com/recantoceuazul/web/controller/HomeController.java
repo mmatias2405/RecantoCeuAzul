@@ -3,6 +3,7 @@ package com.recantoceuazul.web.controller;
 import com.recantoceuazul.web.model.Abastecimento;
 import com.recantoceuazul.web.model.Administrador;
 import com.recantoceuazul.web.model.Setor;
+import com.recantoceuazul.web.model.Captacao;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -137,5 +138,28 @@ public class HomeController {
 
         redirectAttributes.addFlashAttribute("mensagem", "Erro inesperado.");
         return "redirect:/setor";
+    }
+
+    @PostMapping("/salvarcaptacao")
+    public String salvarCaptacao(@ModelAttribute Captacao captacao, RedirectAttributes redirectAttributes) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Captacao> request = new HttpEntity<>(captacao, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(API_URL + "captacoes", request, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                return "redirect:/"; // redireciona pra página inicial
+            }
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 401) {
+                redirectAttributes.addFlashAttribute("mensagem", "Houve um erro no Registro");
+                return "redirect:/captacao"; // redireciona de volta pro login
+            }
+        }
+
+        redirectAttributes.addFlashAttribute("mensagem", "Erro inesperado.");
+        return "redirect:/captacao";
     }
 }
