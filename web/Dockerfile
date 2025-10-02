@@ -16,6 +16,7 @@ COPY src ./src
 
 # Executa o build do Maven. O `-DskipTests` está aqui.
 # O uso de './mvnw' garante o uso do wrapper.
+RUN dos2unix mvnw
 RUN chmod +x mvnw \
     && ./mvnw clean package -DskipTests
 
