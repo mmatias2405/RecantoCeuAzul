@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   db:
@@ -9,7 +8,7 @@ services:
     ports:
       - "${MYSQL_PORT}:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - ./mysql_data:/var/lib/mysql
       - ./mysql-init:/docker-entrypoint-initdb.d
     networks:
       - recantonet
@@ -18,6 +17,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   api:
     build:
@@ -35,6 +35,7 @@ services:
         condition: service_healthy
     networks:
       - recantonet
+    restart: unless-stopped
 
   web:
     build:
@@ -49,9 +50,7 @@ services:
       - api
     networks:
       - recantonet
-
-volumes:
-  mysql_data:
+    restart: unless-stopped
 
 networks:
   recantonet:
