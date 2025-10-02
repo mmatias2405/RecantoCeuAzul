@@ -14,12 +14,8 @@ COPY .mvn ./.mvn
 # Copia o código-fonte
 COPY src ./src
 
-# NOVO PASSO: Converte o mvnw para o formato de linha Unix (LF)
-# 
-# Isso corrige o erro '/bin/sh: ./mvnw: not found'
-RUN dos2unix mvnw
-
-# Executa o build do Maven
+# Executa o build do Maven. O `-DskipTests` está aqui.
+# O uso de './mvnw' garante o uso do wrapper.
 RUN chmod +x mvnw \
     && ./mvnw clean package -DskipTests
 
