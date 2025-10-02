@@ -60,28 +60,6 @@ for %%V in (MYSQL_PORT API_PORT WEB_PORT) do (
 )
 
 echo ===============================
-echo Gerando os JARs dos projetos...
-echo ===============================
-
-cd api
-call mvnw clean package -DskipTests
-if errorlevel 1 (
-    echo Erro ao compilar o projeto da API.
-    pause
-    exit /b
-)
-
-cd ../web
-call mvnw clean package -DskipTests
-if errorlevel 1 (
-    echo Erro ao compilar o projeto Web.
-    pause
-    exit /b
-)
-
-cd ..
-
-echo ===============================
 echo Subindo os containers Docker...
 echo ===============================
 
