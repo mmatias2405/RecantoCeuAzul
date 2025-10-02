@@ -1,6 +1,8 @@
 package com.recantoceuazul.api.model;
 
 import jakarta.persistence.*;
+import java.util.Set;
+import java.util.HashSet;
 
 @Entity
 public class Ator {
@@ -14,18 +16,23 @@ public class Ator {
     private String senha;
     private String papel;
 
-
-
-
+    @ManyToMany(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @JoinTable(
+        name = "possuir", // Nome da tabela de junção
+        joinColumns = @JoinColumn(name = "fk_Ator_id"), // Coluna que referencia esta entidade (Ator)
+        inverseJoinColumns = @JoinColumn(name = "fk_Residencia_id") // Coluna que referencia a outra entidade (Residencia)
+    )
+    private Set<Residencia> residencias = new HashSet<>();
     // Construtores
     public Ator() {}
 
-    public Ator(String nome, String email, String telefone, String senha, String papel) {
+    public Ator(String nome, String email, String telefone, String senha, String papel, Set<Residencia> residencias) {
         this.nome = nome;
         this.email = email;
         this.telefone = telefone;
         this.senha = senha;
         this.papel = papel;
+        this.residencias = residencias;
     }
 
 
@@ -50,6 +57,14 @@ public class Ator {
 
     public void setPapel(String papel) {
         this.papel = papel;
+    }
+    // Getters e Setters para o campo 'residencias'
+    public Set<Residencia> getResidencias() {
+        return residencias;
+    }
+
+    public void setResidencias(Set<Residencia> residencias) {
+        this.residencias = residencias;
     }
 
 
