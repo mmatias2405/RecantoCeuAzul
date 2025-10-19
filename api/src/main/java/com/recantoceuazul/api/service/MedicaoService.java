@@ -18,32 +18,37 @@ public class MedicaoService {
     private MedicaoRepository medicaoRepository;
 
     @Autowired
-    private ResidenciaRepository residenciaRepository; // Você precisará deste repositório
+    private ResidenciaRepository residenciaRepository; 
 
     @Autowired
-    private AtorRepository atorRepository; // E deste também
+    private AtorRepository atorRepository; 
 
-    public Medicao registrarNovaMedicao(MedicaoRequest medicaoDTO) {
-        // 1. Buscar a última medição para a residência informada
+    public Medicao registrarNovaMedicao(MedicaoRequest medicaoDTO) throws Exception{
+
         Optional<Medicao> ultimaMedicaoOpt = medicaoRepository
                 .findTopByResidenciaIdOrderByDataMedicaoDesc(medicaoDTO.getResidenciaId());
 
-        // 2. Calcular o delta
-        float delta;
-        if (ultimaMedicaoOpt.isPresent()) {
-            Medicao ultimaMedicao = ultimaMedicaoOpt.get();
-            delta = medicaoDTO.getVolumeAgua() - ultimaMedicao.getVolumeAgua();
-        } else {
-            // Se não houver medição anterior, o delta é 0
-            delta = 0;
-        }
-
-        // 3. Buscar as entidades Ator e Residencia (lançará exceção se não encontrar)
         Residencia residencia = residenciaRepository.findById(medicaoDTO.getResidenciaId())
                 .orElseThrow(() -> new RuntimeException("Residência não encontrada com id: " + medicaoDTO.getResidenciaId()));
 
         Ator ator = atorRepository.findById(medicaoDTO.getAtorId())
                 .orElseThrow(() -> new RuntimeException("Ator não encontrado com id: " + medicaoDTO.getAtorId()));
+        
+        if (!(ator.getPapel().equals("ADMIN")) && !(ator.getPapel().equals("FISCA"))){
+            throw new RuntimeException("Ator não realiza medição");
+        }
+
+        float delta;
+        if (ultimaMedicaoOpt.isPresent()) {
+            Medicao ultimaMedicao = ultimaMedicaoOpt.get();
+            if (ultimaMedicao.getDataMedicao().getMonth().equals(LocalDateTime.now().getMonth()) && ultimaMedicao.getDataMedicao().getYear() == LocalDateTime.now().getYear()){
+               throw new RuntimeException("Leitura do mês já foi registrada");
+            }
+            delta = medicaoDTO.getVolumeAgua() - ultimaMedicao.getVolumeAgua();
+        } else {
+            // Se não houver medição anterior, o delta é 0
+            delta = 0;
+        }
 
         // 4. Criar a nova entidade Medicao com todos os dados
         Medicao novaMedicao = new Medicao();

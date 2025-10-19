@@ -52,13 +52,13 @@ public class MedicaoController {
 
 
     @PostMapping
-    public ResponseEntity<Medicao> criarMedicao(@RequestBody MedicaoRequest medicaoDTO) {
+    public ResponseEntity<?> criarMedicao(@RequestBody MedicaoRequest medicaoDTO) {
+        Medicao novaMedicao = new Medicao();
         try {
-            Medicao novaMedicao = medicaoService.registrarNovaMedicao(medicaoDTO);
-            return new ResponseEntity<>(novaMedicao, HttpStatus.CREATED);
-        } catch (RuntimeException e) {
-            // Tratamento de erro simples se ator ou residência não forem encontrados
-            return new ResponseEntity<>(new Medicao(), HttpStatus.BAD_REQUEST);
+            novaMedicao = medicaoService.registrarNovaMedicao(medicaoDTO);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
+        return new ResponseEntity<>(novaMedicao, HttpStatus.CREATED);
     }
 }
