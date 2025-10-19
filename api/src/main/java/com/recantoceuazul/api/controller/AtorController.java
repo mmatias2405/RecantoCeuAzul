@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
+
 @RestController
 @RequestMapping("/api/ator")
 @CrossOrigin(origins = "*") // importante para permitir chamadas do frontend
@@ -46,7 +47,29 @@ public class AtorController {
     public Ator salvar(@RequestBody Ator ator) {
         return repo.save(ator);
     }
-
+    
+    @PutMapping("/{id}/tofiscal")
+    public Ator promoveFiscal(@PathVariable Integer id) {
+        return repo.findById(id)
+        .map(atorExistente -> {
+            if(!atorExistente.getResidencias().isEmpty()){
+                return new Ator();
+            }
+            atorExistente.setPapel("FISCA");
+            return repo.save(atorExistente);
+        }).orElse(new Ator());
+    }
+    @PutMapping("/{id}/toadmin")
+    public Ator promoveAdmin(@PathVariable Integer id) {
+        return repo.findById(id)
+        .map(atorExistente -> {
+            if(!atorExistente.getResidencias().isEmpty()){
+                return new Ator();
+            }
+            atorExistente.setPapel("ADMIN");
+            return repo.save(atorExistente);
+        }).orElse(new Ator());
+    }
     @DeleteMapping("/{id}")
     public void deletar(@PathVariable Integer id) {
         repo.deleteById(id);
