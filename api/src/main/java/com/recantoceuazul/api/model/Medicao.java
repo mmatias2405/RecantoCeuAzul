@@ -10,11 +10,12 @@ public class Medicao {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    private Float volume_Agua;
+    @Column(name = "volume_agua")
+    private Float volumeAgua;
 
     private Float delta;
-
-    private LocalDateTime data_medicao;
+    @Column(name = "data_medicao")
+    private LocalDateTime dataMedicao;
 
     @ManyToOne
     @JoinColumn(name = "fk_Residencia_id", nullable = false)
@@ -23,11 +24,12 @@ public class Medicao {
     @ManyToOne
     @JoinColumn(name = "fk_Ator_id", nullable = false)
     private Ator ator;
+    public Medicao(){}
 
     public Medicao(Float volume_Agua, Float delta, LocalDateTime data_medicao, Residencia residencia, Ator ator) {
-        this.volume_Agua = volume_Agua;
+        this.volumeAgua = volume_Agua;
         this.delta = delta;
-        this.data_medicao = data_medicao;
+        this.dataMedicao = data_medicao;
         this.residencia = residencia;
         this.ator = ator;
     }
@@ -39,12 +41,12 @@ public class Medicao {
         this.id = id;
     }
 
-    public Float getVolume_Agua() {
-        return volume_Agua;
+    public Float getVolumeAgua() {
+        return volumeAgua;
     }
 
-    public void setVolume_Agua(Float volume_Agua) {
-        this.volume_Agua = volume_Agua;
+    public void setVolumeAgua(Float volume_Agua) {
+        this.volumeAgua = volume_Agua;
     }
 
     public Float getDelta() {
@@ -55,12 +57,12 @@ public class Medicao {
         this.delta = delta;
     }
 
-    public LocalDateTime getData_medicao() {
-        return data_medicao;
+    public LocalDateTime getDataMedicao() {
+        return dataMedicao;
     }
 
-    public void setData_medicao(LocalDateTime data_medicao) {
-        this.data_medicao = data_medicao;
+    public void setDataMedicao(LocalDateTime data_medicao) {
+        this.dataMedicao = data_medicao;
     }
 
     public Residencia getResidencia() {
