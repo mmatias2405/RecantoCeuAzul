@@ -32,7 +32,10 @@ public class MedicaoController {
     public Medicao buscarPorId(@PathVariable Integer id) {
         return repo.findById(id).orElse(null);
     }
-
+    @GetMapping("/residencia/{id}")
+    public List<Medicao> buscarPorResidencia(@PathVariable Integer id) {
+        return medicaoService.listarMedicaoPorResidencia(id);
+    }
     @PutMapping("/{id}")
     public Medicao atualizar(@PathVariable Integer id, @RequestBody Medicao atualizado) {
         return repo.findById(id).map(existente -> {

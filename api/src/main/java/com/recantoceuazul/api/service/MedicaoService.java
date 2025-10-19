@@ -3,6 +3,8 @@ package com.recantoceuazul.api.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.List;
 import java.util.Optional;
 
 import com.recantoceuazul.api.repository.MedicaoRepository;
@@ -21,7 +23,13 @@ public class MedicaoService {
     private ResidenciaRepository residenciaRepository; 
 
     @Autowired
-    private AtorRepository atorRepository; 
+    private AtorRepository atorRepository;
+    
+    public List<Medicao> listarMedicaoPorResidencia(int residenciaId){
+        List<Medicao> listaMedicao = medicaoRepository
+                .findByResidenciaIdOrderByDataMedicaoDesc(residenciaId);
+        return listaMedicao;
+    }
 
     public Medicao registrarNovaMedicao(MedicaoRequest medicaoDTO) throws Exception{
 
@@ -54,7 +62,7 @@ public class MedicaoService {
         Medicao novaMedicao = new Medicao();
         novaMedicao.setVolumeAgua(medicaoDTO.getVolumeAgua());
         novaMedicao.setDelta(delta);
-        novaMedicao.setDataMedicao(LocalDateTime.now()); // Data e hora atuais
+        novaMedicao.setDataMedicao(LocalDateTime.now(ZoneId.of("America/Sao_Paulo"))); // Data e hora atuais
         novaMedicao.setResidencia(residencia);
         novaMedicao.setAtor(ator);
 
