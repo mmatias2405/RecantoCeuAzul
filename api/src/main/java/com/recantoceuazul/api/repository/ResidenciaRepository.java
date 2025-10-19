@@ -4,5 +4,5 @@ import com.recantoceuazul.api.model.Residencia;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ReidenciaRepository extends JpaRepository<Residencia, Integer> {
+public interface ResidenciaRepository extends JpaRepository<Residencia, Integer> {
 }

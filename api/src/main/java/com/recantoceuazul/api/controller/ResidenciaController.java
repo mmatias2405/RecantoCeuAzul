@@ -1,7 +1,7 @@
 package com.recantoceuazul.api.controller;
 
 import com.recantoceuazul.api.model.Residencia;
-import com.recantoceuazul.api.repository.ReidenciaRepository;
+import com.recantoceuazul.api.repository.ResidenciaRepository;
 
 import org.springframework.web.bind.annotation.*;
 
@@ -13,9 +13,9 @@ import java.util.List;
 @CrossOrigin(origins = "*") 
 public class ResidenciaController {
 
-    private final ReidenciaRepository repo;
+    private final ResidenciaRepository repo;
     
-    public ResidenciaController(ReidenciaRepository repo) {
+    public ResidenciaController(ResidenciaRepository repo) {
         this.repo = repo;
     }
 
