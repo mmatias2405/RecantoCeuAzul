@@ -2,6 +2,9 @@ package com.recantoceuazul.api.model;
 
 import jakarta.persistence.*;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.HashSet;
 
 @Entity
@@ -11,7 +14,8 @@ public class Residencia {
     private int id;
     private int numero;
 
-    @ManyToMany(mappedBy = "residencias") // 'mappedBy' aponta para o nome do campo na classe Ator
+    @ManyToMany(mappedBy = "residencias") 
+    @JsonIgnore
     private Set<Ator> atores = new HashSet<>();
     
     public Residencia() {
