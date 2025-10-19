@@ -34,6 +34,14 @@ public class AtorController {
         return repo.findAll();
     }
 
+    @GetMapping("/{id}")
+    public Ator getByIDAtor(@PathVariable Integer id) {
+        if (id == null || id == 0)
+            return null;
+
+        return repo.findById(id).orElse(null);
+    }
+
     @PostMapping
     public Ator salvar(@RequestBody Ator ator) {
         return repo.save(ator);
