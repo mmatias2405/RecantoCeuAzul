@@ -1,3 +1,5 @@
+// Essa parte do código é a parte "principal", que integra todas as demais partes do código. 
+
 package com.recantoceuazul.api;
 
 import org.springframework.boot.SpringApplication;
