@@ -41,6 +41,7 @@
                 
             </div>
             <div class="col-md-7 col-lg-5">
+                <div th:if="${mensagemSucesso}" th:text="${mensagemSucesso}" class="alert alert-success" role="alert"></div>
                 <div th:if="${mensagem}" th:text="${mensagem}" class="alert alert-danger" role="alert"></div>
                 <form class="form-signin" action="/auth" method="post">
                     <h1 class="h3 mb-3 font-weight-normal">Por Favor, Faça o Login</h1>

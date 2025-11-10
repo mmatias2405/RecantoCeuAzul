@@ -14,6 +14,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.http.HttpHeaders;
 import jakarta.servlet.http.HttpSession;
 
+
 @Controller
 public class HomeController {
     
@@ -30,6 +31,28 @@ public class HomeController {
     public String cadastro(Model model) {
         return "cadastro";
     }
+    @PostMapping("/cadastrar")
+    public String postCadastrar(@ModelAttribute Ator novoAtor, RedirectAttributes redirectAttributes) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Ator> request = new HttpEntity<>(novoAtor, headers);
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(API_URL + "ator", request, String.class);
+            
+            if (response.getStatusCode().is2xxSuccessful()) {
+                redirectAttributes.addFlashAttribute("mensagemSucesso", "Cadastro Efetuado com sucesso");
+                return "redirect:/"; // redireciona pra página inicial
+            }
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 401) {
+                redirectAttributes.addFlashAttribute("mensagem", "Houve um erro no Cadastro, tente novamente!");
+                return "redirect:/cadastro";
+            }
+        }
+        
+        redirectAttributes.addFlashAttribute("mensagem", "Houve um erro inesperado no Cadastro, tente novamente!");
+        return "redirect:/cadastro";
+    }
     
     @PostMapping("/auth")
     public String auth(@ModelAttribute Ator ator, RedirectAttributes redirectAttributes, HttpSession session) {
@@ -44,7 +67,15 @@ public class HomeController {
                 String id = response.getBody();
                 ResponseEntity<Ator> responseAtor = restTemplate.getForEntity(API_URL + "ator/" + id, Ator.class);
                 Ator atorLogado = responseAtor.getBody();
+                if(atorLogado == null){
+                    redirectAttributes.addFlashAttribute("mensagem", "Houve um erro inesperado.");
+                    return "redirect:/";
+                }
                 session.setAttribute("usuarioLogado", atorLogado);
+                if(atorLogado.getPapel() == null){
+                    redirectAttributes.addFlashAttribute("mensagem", "O administrador do sistema ainda não autorizou seu acesso a plataforma, entre em contato com ele para normalizar a situação");
+                    return "redirect:/";
+                }
                 if(atorLogado.getPapel().equals("ADMIN") || atorLogado.getPapel().equals("FISCA")){
                     return "redirect:/dashboard";
                 }
@@ -68,6 +99,10 @@ public class HomeController {
             redirectAttributes.addFlashAttribute("mensagem", "Faça Login para acessar essa página!");
             return "redirect:/";
         }
+        if(usuario.getPapel() == null){
+            redirectAttributes.addFlashAttribute("mensagem", "O administrador do sistema ainda não autorizou seu acesso a plataforma, entre em contato com ele para normalizar a situação");
+            return "redirect:/";
+        }
         if (usuario.getPapel().equals("ADMIN") || usuario.getPapel().equals("FISCA")){
             return "redirect:/dashboard";
         }
@@ -83,8 +118,11 @@ public class HomeController {
             redirectAttributes.addFlashAttribute("mensagem", "Faça Login para acessar essa página!");
             return "redirect:/";
         }
-    
-        if (usuario.getPapel().equals("MORAR") || usuario.getPapel() == null){
+        if(usuario.getPapel() == null){
+            redirectAttributes.addFlashAttribute("mensagem", "O administrador do sistema ainda não autorizou seu acesso a plataforma, entre em contato com ele para normalizar a situação");
+            return "redirect:/";
+        }
+        if (usuario.getPapel().equals("MORAR")){
             return "redirect:/morador";
         }
         
@@ -98,5 +136,5 @@ public class HomeController {
         redirectAttributes.addFlashAttribute("mensagem", "Você saiu do sistema.");
         return "redirect:/";
     }
-
+    
 }

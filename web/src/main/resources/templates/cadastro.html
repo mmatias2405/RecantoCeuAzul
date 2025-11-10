@@ -24,28 +24,30 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark bg-body-tertiary gradient-custom">
             <div class="container-fluid">
-                <a class="navbar-brand" href="index.html">Residencial Recanto do Céu Azul</a>
+                <a class="navbar-brand" href="/">Residencial Recanto do Céu Azul</a>
             </div>
         </nav>
     </header>
     <main>
-        <form class="form-signin" action="index.html" method="get">
+        <div th:if="${mensagemSucesso}" th:text="${mensagemSucesso}" class="alert alert-success" role="alert"></div>
+        <div th:if="${mensagem}" th:text="${mensagem}" class="alert alert-danger" role="alert"></div>
+        <form class="form-signin" action="/cadastrar" method="post">
             <h1 class="h3 mb-3 d-flex justify-content-center font-weight-normal">Cadastro</h1>
             <div class="mb-3">
                 <label for="nome" class="sr-only">Nome Completo</label>
-                <input type="text" id="nome" class="form-control" placeholder="Nome completo" required>
+                <input name="nome" type="text" id="nome" class="form-control" placeholder="Nome completo" required>
             </div>
             <div class="mb-3">
                 <label for="email" class="sr-only">Email</label>
-                <input type="email" id="email" class="form-control" placeholder="exemplo@email.com" required>
+                <input name="email"type="email" id="email" class="form-control" placeholder="exemplo@email.com" required>
             </div>
             <div class="mb-3">
                 <label for="telefone" class="sr-only">Telefone</label>
-                <input type="tel" id="telefone" class="form-control" placeholder="(11) 11111-1111" pattern="\([0-9]{2}\) ?[0-9]{4,5}-[0-9]{4}" title="O formato deve ser (XX) XXXXX-XXXX ou (XX) XXXX-XXXX" required>
+                <input name="telefone" type="tel" id="telefone" class="form-control" placeholder="(11) 11111-1111" pattern="\([0-9]{2}\) ?[0-9]{4,5}-[0-9]{4}" title="O formato deve ser (XX) XXXXX-XXXX ou (XX) XXXX-XXXX" required>
             </div>
             <div class="mb-3">
                 <label for="senha" class="sr-only">Senha</label>
-                <input type="password" id="senha" class="form-control" placeholder="Senha" required>
+                <input name="senha"type="password" id="senha" class="form-control" placeholder="Senha" required>
             </div>
             <div class="mb-3">
                 <label for="senhaConfirma" class="sr-only">Insira a senha novamente</label>
@@ -60,6 +62,34 @@
         <!-- place footer here -->
     </footer>
     <!-- Bootstrap JavaScript Libraries -->
+    <script>
+        // Aguarda o documento carregar para encontrar os elementos
+        document.addEventListener("DOMContentLoaded", function() {
+            
+            // 1. Pega os dois campos de senha pelo ID
+            const senha = document.getElementById("senha");
+            const senhaConfirma = document.getElementById("senhaConfirma");
+            
+            // 2. Cria a função de validação
+            function validarSenhas() {
+                // Compara o valor dos dois campos
+                if (senha.value !== senhaConfirma.value) {
+                    // Se forem diferentes, define uma mensagem de erro customizada
+                    // Isso marca o campo "senhaConfirma" como inválido
+                    senhaConfirma.setCustomValidity("As senhas não conferem!");
+                } else {
+                    // Se forem iguais, limpa a mensagem de erro
+                    // Isso marca o campo como válido
+                    senhaConfirma.setCustomValidity("");
+                }
+            }
+            
+            // 3. Adiciona o "escutador" aos campos
+            // Chama a função 'validarSenhas' sempre que o usuário soltar uma tecla
+            senha.addEventListener("keyup", validarSenhas);
+            senhaConfirma.addEventListener("keyup", validarSenhas);
+        });
+    </script>
     <script
     src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
     integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
