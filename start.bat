@@ -66,12 +66,12 @@ echo ===============================
 docker-compose up --build -d
 
 echo ===============================
-echo Aguardando a API responder em http://localhost:%API_PORT%/api/administrador...
+echo Aguardando a API responder em http://localhost:%API_PORT%/api/ator...
 echo ===============================
 
 :waitloop
 powershell -Command ^
-    "$resp = Invoke-WebRequest -Uri 'http://localhost:%API_PORT%/api/administrador' -UseBasicParsing -ErrorAction SilentlyContinue; " ^
+    "$resp = Invoke-WebRequest -Uri 'http://localhost:%API_PORT%/api/ator' -UseBasicParsing -ErrorAction SilentlyContinue; " ^
     "if ($resp.StatusCode -eq 200) { exit 0 } else { exit 1 }"
 
 if errorlevel 1 (
