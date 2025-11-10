@@ -21,7 +21,7 @@ RUN dos2unix mvnw
 
 # Executa o build do Maven
 RUN chmod +x mvnw \
-    && ./mvnw clean package -DskipTests
+    && ./mvnw clean package
 
 # --------------------------------------------------------------------------------
 
