@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+    <link href="customStyles.css" rel="stylesheet">
+    <title>Recanto do Céu Azul</title>
+    <link rel="icon" type="image/png" href="/images/rcu_logo.png">
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    
+    <!-- Bootstrap CSS v5.2.1 -->
+    <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+    crossorigin="anonymous"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav class="navbar navbar-expand-md navbar-dark bg-body-tertiary gradient-custom">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="index.html">Residencial Recanto do Céu Azul</a>
+                <div class="d-flex text-white">
+                    Bem Vindo! [NOME DO MORADOR]
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container-fluid">
+        
+        <div class="row my-4 align-items-center">
+            <div class="col col-md-auto"> 
+                <h5 class="mb-0">Visualizando dados da residência número</h5>
+            </div>
+            <div class="col-auto">
+                <select class="form-select" aria-label="Default select example" id="residencia">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="150">150</option>
+                </select>
+            </div>
+        </div>
+        <hr>
+        <div id="cards-container" class="d-flex my-2 overflow-x-auto gap-2">
+            
+            <div style="min-width: 180px;">
+                <div class="card text-center">
+                    <div class="card-header gradient-card">
+                        <strong class="text-white">10/2025</strong>
+                    </div>
+                    <div class="card-body ">
+                        <p class="card-text">Consumo: <span class="text-success">190 m<sup>3</sup></span></p>
+                        <p class="card-text">Média: 200 m<sup>3</sup></p>
+                        <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#staticBackdrop">Ver Detalhe</a>
+                    </div>
+                </div>
+            </div>
+            <div style="min-width: 180px;">
+                <div class="card text-center">
+                    <div class="card-header gradient-card">
+                        <strong class="text-white">09/2025</strong>
+                    </div>
+                    <div class="card-body ">
+                        <p class="card-text">Consumo: <span class="text-danger">220 m<sup>3</sup></span></p>
+                        <p class="card-text">Média: 180 m<sup>3</sup></p>
+                        <a href="#" class="btn btn-primary">Ver Detalhe</a>
+                    </div>
+                </div>
+            </div>
+        </div> 
+        
+    </div> 
+    <hr>
+    <div class="mt-2" style="width: 100%; max-width: 900px; margin: 40px auto 0;">
+        <h5 class="mb-2">Histórico de consumo:</h5>
+        <canvas id="meuGrafico"></canvas>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">Detalhes da Medição</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <strong>Marcação no Hidrômetro:</strong>
+                            <span id="modal-volume"></span>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Consumo (Delta):</strong>
+                            <span id="modal-consumo"></span>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Data da Leitura:</strong>
+                            <span id="modal-data"></span>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Responsável pela Leitura:</strong>
+                            <span id="modal-ator"></span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        var residencia = [
+        {
+            "id": 1,
+            "numero": 1
+        },
+        {
+            "id": 2,
+            "numero": 2
+        }];
+        var medicoes = [
+        {
+            "id": 7,
+            "volumeAgua": 220.0,
+            "delta": 30.0,
+            "dataMedicao": "2025-10-19T17:01:13",
+            "residencia": {
+                "id": 1,
+                "numero": 1
+            },
+            "ator": {
+                "id": 4,
+                "nome": "Morador teste",
+                "email": "morador@gmail.com",
+                "telefone": "(11)11111-1111",
+                "senha": "testeMorador",
+                "papel": "FISCA",
+                "residencias": []
+            }
+        },
+        {
+            "id": 6,
+            "volumeAgua": 190.0,
+            "delta": 10.0,
+            "dataMedicao": "2025-09-19T17:01:05",
+            "residencia": {
+                "id": 1,
+                "numero": 1
+            },
+            "ator": {
+                "id": 4,
+                "nome": "Morador teste",
+                "email": "morador@gmail.com",
+                "telefone": "(11)11111-1111",
+                "senha": "testeMorador",
+                "papel": "FISCA",
+                "residencias": []
+            }
+        },
+        {
+            "id": 5,
+            "volumeAgua": 180.0,
+            "delta": 60.0,
+            "dataMedicao": "2025-08-19T17:00:58",
+            "residencia": {
+                "id": 1,
+                "numero": 1
+            },
+            "ator": {
+                "id": 4,
+                "nome": "Morador teste",
+                "email": "morador@gmail.com",
+                "telefone": "(11)11111-1111",
+                "senha": "testeMorador",
+                "papel": "FISCA",
+                "residencias": []
+            }
+        },
+        {
+            "id": 4,
+            "volumeAgua": 120.0,
+            "delta": 120.0,
+            "dataMedicao": "2025-07-19T16:21:52",
+            "residencia": {
+                "id": 1,
+                "numero": 1
+            },
+            "ator": {
+                "id": 1,
+                "nome": "Adm",
+                "email": "admin@gmail.com",
+                "telefone": "(11)11111-1111",
+                "senha": "admin",
+                "papel": "ADMIN",
+                "residencias": []
+            }
+        },
+        {
+            "id": 3,
+            "volumeAgua": 0.0,
+            "delta": 0.0,
+            "dataMedicao": "2025-06-19T16:21:43",
+            "residencia": {
+                "id": 1,
+                "numero": 1
+            },
+            "ator": {
+                "id": 1,
+                "nome": "Adm",
+                "email": "admin@gmail.com",
+                "telefone": "(11)11111-1111",
+                "senha": "admin",
+                "papel": "ADMIN",
+                "residencias": []
+            }
+        }
+        ];
+        // ----- INÍCIO DO SCRIPT -----
+        
+        // Espera o DOM estar pronto para executar o script
+        document.addEventListener("DOMContentLoaded", function() {
+            
+            // 1. Definição da média fixa
+            const mediaFixa = 50.0;
+            
+            // 2. Seleciona o container onde os cards serão inseridos
+            const container = document.getElementById('cards-container');
+            
+            // 3. Limpa o container caso já tenha algo (boa prática)
+            container.innerHTML = '';
+            
+            // 4. Itera sobre cada 'medicao' no seu array
+            medicoes.forEach(medicao => {
+                
+                // 5. Lógica para formatar a data (MM/YYYY)
+                const data = new Date(medicao.dataMedicao);
+                const mes = String(data.getMonth() + 1).padStart(2, '0'); // getMonth() é 0-11, por isso +1
+                const ano = data.getFullYear();
+                const dataHeader = `${mes}/${ano}`;
+                
+                // 6. Lógica para a classe do consumo (verde ou vermelho)
+                const classeConsumo = medicao.delta > mediaFixa ? 'text-danger' : 'text-success';
+                
+                // 7. Cria o HTML do card usando Template Literals (crases ``)
+                //    Adicionamos 'data-id' ao botão para saber qual medição buscar depois
+                const cardHTML = `
+            <div style="min-width: 180px;" class="m-2"> <div class="card text-center">
+                    <div class="card-header gradient-card">
+                        <strong class="text-white">${dataHeader}</strong>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Consumo: <span class="${classeConsumo}">${medicao.delta.toFixed(1)} m<sup>3</sup></span></p>
+                        <p class="card-text">Média: ${mediaFixa.toFixed(1)} m<sup>3</sup></p>
+                        
+                        <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#staticBackdrop" data-id="${medicao.id}">
+                            Ver Detalhe
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+                
+                // 8. Insere o card gerado dentro do container
+                container.innerHTML += cardHTML;
+            });
+            
+            // ----- LÓGICA DO MODAL -----
+            
+            // 9. Seleciona o próprio modal
+            const modalElement = document.getElementById('staticBackdrop');
+            
+            // 10. Seleciona os campos de texto dentro do modal
+            const modalVolume = document.getElementById('modal-volume');
+            const modalConsumo = document.getElementById('modal-consumo');
+            const modalData = document.getElementById('modal-data');
+            const modalAtor = document.getElementById('modal-ator');
+            const modalTitulo = document.getElementById('staticBackdropLabel');
+            
+            // 11. Adiciona um "escutador" de evento ao modal.
+            //     Isso é disparado TODA VEZ que o modal está prestes a ser aberto.
+            modalElement.addEventListener('show.bs.modal', function (event) {
+                
+                // 12. Pega o botão que acionou o modal (o 'Ver Detalhe' que foi clicado)
+                const button = event.relatedTarget;
+                
+                // 13. Pega o 'data-id' que armazenamos no botão
+                const medicaoId = parseInt(button.getAttribute('data-id'), 10);
+                
+                // 14. Encontra o objeto 'medicao' correspondente no array original
+                const medicao = medicoes.find(m => m.id === medicaoId);
+                
+                // 15. Formata a data e hora para exibição no modal
+                const dataLeitura = new Date(medicao.dataMedicao).toLocaleString('pt-BR', {
+                    dateStyle: 'short',
+                    timeStyle: 'short'
+                });
+                
+                // 16. Formata o título do modal
+                const data = new Date(medicao.dataMedicao);
+                const mes = String(data.getMonth() + 1).padStart(2, '0');
+                const ano = data.getFullYear();
+                
+                // 17. Preenche o HTML do modal com os dados encontrados
+                modalTitulo.textContent = `Detalhes da Medição (${mes}/${ano})`;
+                modalVolume.textContent = `${medicao.volumeAgua.toFixed(1)} m³`;
+                modalConsumo.textContent = `${medicao.delta.toFixed(1)} m³`;
+                modalData.textContent = dataLeitura;
+                modalAtor.textContent = medicao.ator.nome;
+            });
+            // 1. Preparar os dados para o gráfico
+            //    Gráficos ficam melhores em ordem cronológica (do mais antigo para o mais novo)
+            //    Usamos [...medicoes] para criar uma CÓPIA antes de inverter, para não afetar os cards.
+            const medicoesInvertidas = [...medicoes].reverse();
+            
+            // 2. Criar os arrays de 'labels' (eixo X) e 'data' (eixo Y)
+            const labelsGrafico = medicoesInvertidas.map(m => {
+                const data = new Date(m.dataMedicao);
+                const mes = String(data.getMonth() + 1).padStart(2, '0');
+                const ano = data.getFullYear();
+                return `${mes}/${ano}`; // Ex: "06/2025"
+            });
+            
+            const consumoDataGrafico = medicoesInvertidas.map(m => m.delta); // Ex: [0.0, 120.0, 60.0, ...]
+            
+            // 3. Criar o array de dados da "Média" (repetindo o valor 50)
+            const mediaDataGrafico = Array(labelsGrafico.length).fill(mediaFixa); // Ex: [50, 50, 50, 50, 50]
+            
+            // 4. Pegar o 'contexto' 2D do nosso canvas
+            const ctx = document.getElementById('meuGrafico').getContext('2d');
+            
+            // 5. Criar o gráfico!
+            const meuGrafico = new Chart(ctx, {
+                type: 'line', // Tipo do gráfico
+                data: {
+                    labels: labelsGrafico, // Nossos labels do eixo X
+                    datasets: [
+                    {
+                        // Linha de Consumo
+                        label: 'Consumo (m³)',
+                        data: consumoDataGrafico, // Nossos dados do eixo Y
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        fill: true,
+                        tension: 0.1 // Deixa a linha levemente curvada
+                    },
+                    {
+                        // Linha da Média
+                        label: 'Média (m³)',
+                        data: mediaDataGrafico, // Nossos dados da média
+                        borderColor: 'rgb(255, 99, 132)', // Cor vermelha
+                        borderDash: [5, 5], // Faz a linha ser pontilhada
+                        fill: false,
+                        pointRadius: 0 // Não mostra pontos na linha da média
+                    }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Consumo (m³)'
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+    <!-- Bootstrap JavaScript Libraries -->
+    <script
+    src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+    integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+    crossorigin="anonymous"
+    ></script>
+    
+    <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"
+    integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+"
+    crossorigin="anonymous"
+    ></script>
+</body>
+</html>

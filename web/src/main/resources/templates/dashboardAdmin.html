@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+    <link href="customStyles.css" rel="stylesheet">
+    <title>Recanto do Céu Azul</title>
+    <link rel="icon" type="image/png" href="/images/rcu_logo.png">
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    
+    <!-- Bootstrap CSS v5.2.1 -->
+    <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+    crossorigin="anonymous"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+</head>
+
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-body-tertiary gradient-custom">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="index.html">Residencial Recanto do Céu Azul</a>
+                <div class="d-flex">
+                    <ul class="navbar-nav">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            Admin
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-md-end"
+                        aria-labelledby="navbarDarkDropdownMenuLink">
+                        <li><a class="dropdown-item" href="registrarConsumo.html">Registrar Consumo</a></li>
+                        <li><a class="dropdown-item" href="registrarResidencia.html">Registrar Residência</a></li>
+                        <li><a class="dropdown-item" href="index.html">Logout</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+</header>
+<div class="container-fluid">
+    <h1 class="h3 mt-3 font-weight-normal">Dashboard</h1>
+    <div
+    class="row justify-content-center g-2 mt-3"
+    ><button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#consumoModal">
+        Registrar Consumo
+    </button>
+    <div class="col-lg-6 col-md-12 col-sm-12 p-2">
+        
+        <h5 class="my-3">140 Residências sem registro de consumo desse mês</h5>
+        <table class="table table-bordered align-middle">
+            <thead>
+                <tr>
+                    <th class="text-center">Número da Residência</th>
+                    <th class="text-center">Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-center">120</td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#consumoModal">
+                            Registrar Consumo
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+            <caption class="text-center">
+                <a href="consumo.html">Ver mais...</a>
+            </caption>
+        </table>
+    </div>
+    <div class="col-lg-6 col-md-1 col-sm-1 p-3">
+        <h5 class="my-3">10 Usuários aguardando aprovação</h5>
+        <table class="table table-bordered align-middle">
+            <tbody>
+                <tr>
+                    <td class="text-center">Ana Silva</td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-primary" 
+                        data-bs-toggle="modal"
+                        data-bs-target="#approvalModal"
+                        data-user-name="Ana Silva"
+                        data-user-email="ana.silva@email.com"
+                        data-user-phone="(11) 98765-4321">
+                        Aprovar
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+        <caption class="text-center">
+            <a href="usuario.html">Ver mais ...</a>
+        </caption>
+    </table>
+</div>
+</div>
+<hr>
+<h5 class="my-3">Dados gerais do condôminio</h5>
+<div id="cards-container" class="row justify-content-center">
+    <div class="col-lg-4 col-md-1 col-sm-1">
+        <div class="card text-center">
+            <div class="card-header gradient-card">
+                <strong class="text-white">10/2025</strong>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Consumo Total: 6030 m<sup>3</sup></p>
+                <p class="card-text">Medições realizadas: 45/150</p>
+                <p class="card-text">Média de Consumo: 134 m<sup>3</sup></p>
+            </div>
+        </div>
+    </div>
+</div> 
+<hr>
+<h5 class="my-3">Dados dos meses anteriores</h5>
+<div id="cards-container" class="d-flex my-2 overflow-x-auto gap-2">
+    
+    <div style="min-width: 180px;">
+        <div class="card text-center">
+            <div class="card-header gradient-card">
+                <strong class="text-white">10/2025</strong>
+            </div>
+            <div class="card-body ">
+                <p class="card-text">Consumo Total: 6030 m<sup>3</sup></p>
+                <p class="card-text">Medições realizadas: 45/150</p>
+                <p class="card-text">Média de Consumo: 134 m<sup>3</sup></p>
+            </div>
+        </div>
+    </div>
+    <div style="min-width: 180px;">
+        <div class="card text-center">
+            <div class="card-header gradient-card">
+                <strong class="text-white">09/2025</strong>
+            </div>
+            <div class="card-body ">
+                <p class="card-text">Consumo Total: 6030 m<sup>3</sup></p>
+                <p class="card-text">Medições realizadas: 45/150</p>
+                <p class="card-text">Média de Consumo: 134 m<sup>3</sup></p>
+            </div>
+        </div>
+    </div>
+    <div style="min-width: 180px;">
+        <div class="card text-center">
+            <div class="card-header gradient-card">
+                <strong class="text-white">09/2025</strong>
+            </div>
+            <div class="card-body ">
+                <p class="card-text">Consumo Total: 6030 m<sup>3</sup></p>
+                <p class="card-text">Medições realizadas: 45/150</p>
+                <p class="card-text">Média de Consumo: 134 m<sup>3</sup></p>
+            </div>
+        </div>
+    </div>
+</div>
+<hr>
+
+</div> 
+<div
+class="modal fade"
+id="approvalModal"
+tabindex="-1"
+aria-labelledby="approvalModalLabel"
+aria-hidden="true"
+>
+<div class="modal-dialog">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="approvalModalLabel">Aprovar Usuário</h5>
+            <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+            ></button>
+        </div>
+        <div class="modal-body">
+            <p>
+                <strong>Nome:</strong>
+                <span id="modalUserName"></span>
+            </p>
+            <p>
+                <strong>Email:</strong>
+                <span id="modalUserEmail"></span>
+            </p>
+            <p>
+                <strong>Telefone:</strong>
+                <span id="modalUserPhone"></span>
+            </p>
+            
+            <hr />
+            
+            <form id="approvalForm">
+                <div class="mb-3">
+                    <label for="roleSelect" class="form-label">Definir Papel:</label>
+                    <select class="form-select" id="roleSelect">
+                        <option selected disabled value="">Selecione um papel...</option>
+                        <option value="morador">Morador</option>
+                        <option value="administrador">Administrador</option>
+                        <option value="fiscal">Fiscal</option>
+                    </select>
+                </div>
+                
+                <div id="residenceContainer" class="mt-3" style="display: none">
+                    <label class="form-label">Residências:</label>
+                    
+                    <div id="residenceList">
+                        <div class="input-group mb-2 residence-item">
+                            <select class="form-select" name="residences[]"></select>
+                            <button
+                            class="btn btn-outline-danger remove-residence-btn"
+                            type="button"
+                            style="display: none"
+                            >
+                            &times;
+                        </button>
+                    </div>
+                </div>
+                
+                <button
+                type="button"
+                class="btn btn-outline-primary btn-sm mt-2"
+                id="addResidenceBtn"
+                disabled
+                >
+                + Adicionar outra residência
+            </button>
+        </div>
+    </form>
+</div>
+<div class="modal-footer">
+    <button
+    type="button"
+    class="btn btn-secondary"
+    data-bs-dismiss="modal"
+    >
+    Cancelar
+</button>
+<button type="button" class="btn btn-primary" id="saveApprovalBtn">
+    Salvar e Aprovar
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- MODAL CONSUMO -->
+<div
+class="modal fade"
+id="consumoModal"
+tabindex="-1"
+aria-labelledby="consumoModalLabel"
+aria-hidden="true"
+>
+<div class="modal-dialog">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="consumoModalLabel">Registrar Consumo</h5>
+            <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+            ></button>
+        </div>
+        <div class="modal-body">
+            <form id="consumoForm">
+                <div class="mb-3">
+                    <label for="setor" class="form-label">Selecione a residência</label>
+                    <select class="form-select" aria-label="Default select example" id="setor">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="volume" class="sr-only">Insira o leitura do Hidrômetro(m³)</label>
+                    <input type="number"step="0.1" id="volume" class="form-control" placeholder="Volume" required>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+            >
+            Cancelar
+        </button>
+        <button type="button" class="btn btn-primary" id="saveConsumolBtn">
+            Registrar
+        </button>
+    </div>
+</div>
+</div>
+</div>
+<!-- Bootstrap JavaScript Libraries -->
+<script
+src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+crossorigin="anonymous"
+></script>
+
+<script
+src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"
+integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+"
+crossorigin="anonymous"
+></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const approvalModal = document.getElementById("approvalModal");
+        const roleSelect = document.getElementById("roleSelect");
+        const residenceContainer = document.getElementById("residenceContainer");
+        const residenceList = document.getElementById("residenceList");
+        const addResidenceBtn = document.getElementById("addResidenceBtn");
+        
+        const allResidences = [
+        { value: "", text: "Selecione uma residência...", disabled: true },
+        { value: "1", text: "Residência A-101" },
+        { value: "2", text: "Residência A-102" },
+        { value: "3", text: "Residência B-201" },
+        { value: "4", text: "Residência B-202" },
+        { value: "5", text: "Residência C-301" },
+        { value: "6", text: "Residência C-302" },
+        { value: "7", text: "Residência D-401" },
+        ];
+        
+        const totalAvailableResidences = allResidences.length - 1;
+        
+        approvalModal.addEventListener("show.bs.modal", function (event) {
+            const button = event.relatedTarget;
+            const userName = button.getAttribute("data-user-name");
+            const userEmail = button.getAttribute("data-user-email");
+            const userPhone = button.getAttribute("data-user-phone");
+            
+            approvalModal.querySelector("#modalUserName").textContent = userName;
+            approvalModal.querySelector("#modalUserEmail").textContent = userEmail;
+            approvalModal.querySelector("#modalUserPhone").textContent = userPhone;
+            
+            resetApprovalForm();
+        });
+        
+        roleSelect.addEventListener("change", function () {
+            if (this.value === "morador") {
+                residenceContainer.style.display = "block";
+                updateAddButtonState();
+            } else {
+                residenceContainer.style.display = "none";
+            }
+        });
+        
+        addResidenceBtn.addEventListener("click", function () {
+            const firstItem = residenceList.querySelector(".residence-item");
+            const newItem = firstItem.cloneNode(true);
+            const newSelect = newItem.querySelector("select");
+            
+            populateResidenceSelect(newSelect);
+            newSelect.value = "";
+            
+            newItem.querySelector(".remove-residence-btn").style.display = "block";
+            residenceList.appendChild(newItem);
+            
+            updateAllSelects();
+            updateAddButtonState();
+        });
+        
+        residenceList.addEventListener("click", function (e) {
+            if (e.target && e.target.classList.contains("remove-residence-btn")) {
+                e.target.closest(".residence-item").remove();
+                updateAllSelects();
+                updateAddButtonState();
+            }
+        });
+        
+        residenceList.addEventListener("change", function(e) {
+            if (e.target && e.target.tagName === 'SELECT') {
+                updateAllSelects();
+                updateAddButtonState();
+            }
+        });
+        
+        function getAllSelectedValues() {
+            const selectedValues = [];
+            residenceList.querySelectorAll("select[name='residences[]']").forEach(s => {
+                if (s.value) {
+                    selectedValues.push(s.value);
+                }
+            });
+            return selectedValues;
+        }
+        
+        function populateResidenceSelect(selectElement) {
+            const currentValue = selectElement.value;
+            const allOtherSelectedValues = [];
+            
+            residenceList.querySelectorAll("select[name='residences[]']").forEach(s => {
+                if (s !== selectElement && s.value) {
+                    allOtherSelectedValues.push(s.value);
+                }
+            });
+            
+            selectElement.innerHTML = "";
+            
+            allResidences.forEach(res => {
+                if (res.value === currentValue || !allOtherSelectedValues.includes(res.value)) {
+                    const option = document.createElement("option");
+                    option.value = res.value;
+                    option.textContent = res.text;
+                    
+                    if (res.disabled) {
+                        option.disabled = true;
+                    }
+                    if (res.value === currentValue) {
+                        option.selected = true;
+                    }
+                    
+                    selectElement.appendChild(option);
+                }
+            });
+        }
+        
+        function updateAllSelects() {
+            residenceList.querySelectorAll("select[name='residences[]']").forEach(s => {
+                populateResidenceSelect(s);
+            });
+        }
+        
+        function updateAddButtonState() {
+            const allSelects = residenceList.querySelectorAll("select[name='residences[]']");
+            const lastSelect = allSelects[allSelects.length - 1];
+            const selectedCount = getAllSelectedValues().length;
+            
+            let isLastSelectEmpty = !lastSelect || lastSelect.value === "";
+            let areAllOptionsUsed = selectedCount >= totalAvailableResidences;
+            
+            if (isLastSelectEmpty || areAllOptionsUsed) {
+                addResidenceBtn.disabled = true;
+            } else {
+                addResidenceBtn.disabled = false;
+            }
+        }
+        
+        function resetApprovalForm() {
+            document.getElementById("approvalForm").reset();
+            residenceContainer.style.display = "none";
+            
+            const allItems = residenceList.querySelectorAll(".residence-item");
+            allItems.forEach((item, index) => {
+                if (index > 0) {
+                    item.remove();
+                }
+            });
+            
+            const firstSelect = residenceList.querySelector("select");
+            firstSelect.innerHTML = "";
+            
+            allResidences.forEach(res => {
+                const option = document.createElement("option");
+                option.value = res.value;
+                option.textContent = res.text;
+                if (res.disabled) {
+                    option.disabled = true;
+                    option.selected = true;
+                }
+                firstSelect.appendChild(option);
+            });
+            
+            updateAddButtonState();
+        }
+        
+        document.getElementById("saveApprovalBtn").addEventListener("click", function() {
+            const role = roleSelect.value;
+            const selectedResidences = getAllSelectedValues();
+            
+            console.log("Papel Selecionado:", role);
+            console.log("Residências Selecionadas:", selectedResidences);
+        });
+    });
+</script>
+</body>
+</html>
