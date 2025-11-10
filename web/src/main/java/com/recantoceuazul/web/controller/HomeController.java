@@ -17,6 +17,9 @@ import org.springframework.http.MediaType;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.http.HttpHeaders;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 
 @Controller
@@ -165,6 +168,31 @@ public class HomeController {
         return "dashboardAdmin"; // Retorna a página "dashboard.html" (por exemplo)
     }
     
+    @GetMapping("/consumo")
+    public String cosumo(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+        
+        Ator usuario = (Ator) session.getAttribute("usuarioLogado");
+        if (usuario == null) {
+            // Não está logado, redireciona para a home (login)
+            redirectAttributes.addFlashAttribute("mensagem", "Faça Login para acessar essa página!");
+            return "redirect:/";
+        }
+        if(usuario.getPapel() == null){
+            redirectAttributes.addFlashAttribute("mensagem", "O administrador do sistema ainda não autorizou seu acesso a plataforma, entre em contato com ele para normalizar a situação");
+            return "redirect:/";
+        }
+        if (usuario.getPapel().equals("MORAR")){
+            return "redirect:/morador?residencia=0";
+
+        }
+        
+        ResponseEntity<Medicao[]> responseMedicoes = restTemplate.getForEntity(API_URL + "/medicao", Medicao[].class);
+        List<Medicao>medicoes = Arrays.asList(responseMedicoes .getBody());
+        model.addAttribute("medicoes", medicoes);
+        return "consumo";
+    }
+    
+
     @GetMapping("/logout")
     public String logout(HttpSession session, RedirectAttributes redirectAttributes) {
         session.invalidate(); // Limpa/invalida a sessão
