@@ -4,6 +4,8 @@
 
 package com.recantoceuazul.api.controller;
 
+import com.recantoceuazul.api.dto.ConsumoMensalProjection;
+
 // Importação das classes necessárias para manipular objetos de medição,
 // realizar operações de banco de dados e lidar com requisições HTTP.
 
@@ -26,35 +28,35 @@ import java.util.List;
 @RequestMapping("/api/medicao")
 @CrossOrigin(origins = "*")
 public class MedicaoController {
-
+    
     // Injeta automaticamente o serviço responsável pelas regras de negócio associadas às medições.
     @Autowired
     private MedicaoService medicaoService;
-
+    
     // Injeta o repositório responsável por realizar operações diretas no banco de dados relacionadas às medições.
     @Autowired
     private MedicaoRepository repo;
-
+    
     // GET -> Retorna a lista completa de medições registradas no banco de dados.
     @GetMapping
     public List<Medicao> listar() {
         return repo.findAll();
     }
-
+    
     // GET -> Retorna uma medição específica com base no ID fornecido na URL.
     // Caso o ID não exista, retorna null.
     @GetMapping("/{id}")
     public Medicao buscarPorId(@PathVariable Integer id) {
         return repo.findById(id).orElse(null);
     }
-
+    
     // GET -> Retorna todas as medições associadas a uma residência específica.
     // O ID da residência é passado como parâmetro na URL.
     @GetMapping("/residencia/{id}")
     public List<Medicao> buscarPorResidencia(@PathVariable Integer id) {
         return medicaoService.listarMedicaoPorResidencia(id);
     }
-
+    
     // PUT -> Atualiza uma medição existente com base no ID informado.
     // Caso a medição exista, seus campos são atualizados com os novos valores enviados na requisição.
     // Se o ID não for encontrado, retorna null.
@@ -69,14 +71,14 @@ public class MedicaoController {
             return repo.save(existente);
         }).orElse(null);
     }
-
+    
     // DELETE -> Exclui uma medição específica com base no ID informado.
     @DeleteMapping("/{id}")
     public void deletar(@PathVariable Integer id) {
         repo.deleteById(id);
     }
-
-
+    
+    
     // POST -> Cria e registra uma nova medição no sistema.
     // Recebe um objeto do tipo MedicaoRequest, que contém os dados necessários para o registro.
     // Caso ocorra algum erro de validação ou processamento, retorna um erro 400 (BAD_REQUEST).
@@ -91,4 +93,11 @@ public class MedicaoController {
         }
         return new ResponseEntity<>(novaMedicao, HttpStatus.CREATED);
     }
+    
+    //Retorna uma média de consumo do condominio
+    @GetMapping("/media")
+    public List<ConsumoMensalProjection> getMediaConsumo() {
+        return repo.getMediaConsumoCondominio();
+    }
+    
 }

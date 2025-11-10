@@ -1,7 +1,9 @@
 package com.recantoceuazul.api.repository;
 
+import com.recantoceuazul.api.dto.ConsumoMensalProjection;
 import com.recantoceuazul.api.model.Medicao;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,4 +20,11 @@ public interface MedicaoRepository extends JpaRepository<Medicao, Integer> {
     // Retorna todas as medições associadas a uma residência específica,
     // ordenadas da mais recente para a mais antiga.
     List<Medicao> findByResidenciaIdOrderByDataMedicaoDesc(Integer residenciaId);
+    
+    //Retorna a média de consumo mensal do condominio
+    @Query(
+        value = "SELECT * FROM v_media_consumo_condominio", 
+        nativeQuery = true
+    )
+    List<ConsumoMensalProjection> getMediaConsumoCondominio();
 }

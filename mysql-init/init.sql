@@ -50,6 +50,17 @@ ALTER TABLE possuir ADD CONSTRAINT FK_Possuir_2
     REFERENCES residencia (id)
     ON DELETE SET NULL;
 
+CREATE OR REPLACE VIEW v_media_consumo_condominio AS
+SELECT
+    DATE_FORMAT(data_medicao, '%m/%Y') AS MesAno,
+    ROUND(AVG(delta), 2) AS MediaConsumo
+FROM
+    medicao
+GROUP BY
+    DATE_FORMAT(data_medicao, '%m/%Y')
+ORDER BY
+	DATE_FORMAT(data_medicao, '%m/%Y');
+
 /* Populando o Banco de dados */
 INSERT INTO ator (email, telefone, nome, senha, papel) VALUES
 -- ID 1 (Admin)

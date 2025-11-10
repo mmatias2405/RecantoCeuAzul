@@ -1,6 +1,10 @@
 package com.recantoceuazul.web.controller;
 
 import com.recantoceuazul.web.model.*;
+
+import java.util.Arrays;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
@@ -79,7 +83,7 @@ public class HomeController {
                 if(atorLogado.getPapel().equals("ADMIN") || atorLogado.getPapel().equals("FISCA")){
                     return "redirect:/dashboard";
                 }
-                return "redirect:/morador";
+                return "redirect:/morador?residencia=0";
             }
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode().value() == 401) {
@@ -92,7 +96,7 @@ public class HomeController {
         return "redirect:/";
     }
     @GetMapping("/morador")
-    public String mostrarDashboardMorador(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+    public String mostrarDashboardMorador(@RequestParam("residencia") Integer residenciaId, HttpSession session, Model model, RedirectAttributes redirectAttributes) {
         Ator usuario = (Ator) session.getAttribute("usuarioLogado");
         if (usuario == null) {
             // Não está logado, redireciona para a home (login)
@@ -107,6 +111,37 @@ public class HomeController {
             return "redirect:/dashboard";
         }
         // 3. Se chegou aqui, ele está logado!
+        model.addAttribute("nomeUsuario", usuario.getNome());
+        model.addAttribute("residencias", usuario.getResidencias());
+        
+        //Importante para garantir que o morador não consulte outras residencias através do URL
+        boolean podeVerEssaResidencia = false;
+        if(residenciaId != null){
+            for (Residencia r : usuario.getResidencias()){
+                if(r.getId() == residenciaId){
+                    podeVerEssaResidencia = true;
+                    model.addAttribute("residenciaNumero", r.getNumero());
+                }         
+            }      
+        }
+        int residenciaIdBusca;
+        if(podeVerEssaResidencia)
+            residenciaIdBusca = residenciaId;
+        else{
+            Residencia r = usuario.getResidencias().iterator().next();
+            residenciaIdBusca = r.getId();
+            model.addAttribute("residenciaNumero", r.getNumero());
+        }   
+            
+        
+        ResponseEntity<Medicao[]> responseMedicoes = restTemplate.getForEntity(API_URL + "/medicao/residencia/" + residenciaIdBusca, Medicao[].class);
+        List<Medicao>medicoes = Arrays.asList(responseMedicoes .getBody());
+        model.addAttribute("medicoes", medicoes);
+        
+        ResponseEntity<Media[]> responseMedias = restTemplate.getForEntity(API_URL + "/medicao/media", Media[].class);
+        List<Media>medias = Arrays.asList(responseMedias .getBody());
+        model.addAttribute("medias", medias);
+        
         return "dashboardMorador"; // Retorna a página "dashboard.html" (por exemplo)
     }
     
@@ -123,7 +158,7 @@ public class HomeController {
             return "redirect:/";
         }
         if (usuario.getPapel().equals("MORAR")){
-            return "redirect:/morador";
+            return "redirect:/morador?residencia=0";
         }
         
         // 3. Se chegou aqui, ele está logado!
