@@ -46,9 +46,9 @@ Antes de iniciar, você precisa ter o **Docker** e o **Docker Compose** instalad
    ```env
    # Banco de dados
    MYSQL_USER=root
-   MYSQL_ROOT_PASSWORD= #Sua senha aqui
+   MYSQL_ROOT_PASSWORD= #Alien_Earth_2025
    MYSQL_DATABASE=recantoceuazul
-   MYSQL_PORT=3307
+   MYSQL_PORT=3306
 
    # API
    API_PORT=8081
