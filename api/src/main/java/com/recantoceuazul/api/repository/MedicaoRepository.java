@@ -1,6 +1,7 @@
 package com.recantoceuazul.api.repository;
 
 import com.recantoceuazul.api.dto.ConsumoMensalProjection;
+import com.recantoceuazul.api.dto.DadosGeraisProjection;
 import com.recantoceuazul.api.model.Medicao;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -27,4 +28,11 @@ public interface MedicaoRepository extends JpaRepository<Medicao, Integer> {
         nativeQuery = true
     )
     List<ConsumoMensalProjection> getMediaConsumoCondominio();
+
+    //Retorna dados gerais de consumo do condominio mês a mês
+    @Query(
+        value = "SELECT * FROM v_dashboard_mensal", 
+        nativeQuery = true
+    )
+    List<DadosGeraisProjection> getDadosGerais();
 }

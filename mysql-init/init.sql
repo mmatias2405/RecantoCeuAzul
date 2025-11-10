@@ -61,6 +61,34 @@ GROUP BY
 ORDER BY
 	DATE_FORMAT(data_medicao, '%m/%Y');
 
+CREATE OR REPLACE VIEW v_dashboard_mensal AS
+SELECT
+    DATE_FORMAT(m.data_medicao, '%m/%Y') AS MesAno,
+    
+    -- Consumo Total: A SOMA de todo o consumo (delta) no mês
+    ROUND(SUM(m.delta), 2) AS ConsumoTotal,
+    
+    -- Medições Realizadas: CONCAT do total de medições no mês / total de residências
+    CONCAT(
+        COUNT(m.id), 
+        '/', 
+        r_total.total_residencias
+    ) AS MedicoesRealizadas,
+    
+    -- Média de Consumo: A MÉDIA do 'delta' das medições daquele mês
+    ROUND(AVG(m.delta), 2) AS MediaConsumo
+FROM
+    medicao m
+CROSS JOIN 
+    -- Usamos CROSS JOIN para trazer o número total de residências
+    (SELECT COUNT(*) AS total_residencias FROM residencia) AS r_total
+GROUP BY
+    DATE_FORMAT(m.data_medicao, '%m/%Y'), 
+    r_total.total_residencias
+ORDER BY
+	DATE_FORMAT(m.data_medicao, '%m/%Y');
+SELECT * FROM v_dashboard_mensal;
+
 /* Populando o Banco de dados */
 INSERT INTO ator (email, telefone, nome, senha, papel) VALUES
 -- ID 1 (Admin)

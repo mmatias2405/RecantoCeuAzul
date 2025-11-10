@@ -5,6 +5,7 @@
 package com.recantoceuazul.api.controller;
 
 import com.recantoceuazul.api.dto.ConsumoMensalProjection;
+import com.recantoceuazul.api.dto.DadosGeraisProjection;
 
 // Importação das classes necessárias para manipular objetos de medição,
 // realizar operações de banco de dados e lidar com requisições HTTP.
@@ -98,6 +99,12 @@ public class MedicaoController {
     @GetMapping("/media")
     public List<ConsumoMensalProjection> getMediaConsumo() {
         return repo.getMediaConsumoCondominio();
+    }
+
+    //Retorna dados gerais de consumo do condominio mês a mês
+    @GetMapping("/dadosgerais")
+    public List<DadosGeraisProjection> getDadosGerais() {
+        return repo.getDadosGerais();
     }
     
 }

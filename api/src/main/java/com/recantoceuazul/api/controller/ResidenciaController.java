@@ -48,7 +48,13 @@ public class ResidenciaController {
             return null;
 
         return repo.findById(id).orElse(null);
-    }   
+    }
+    
+    // GET -> Retorna as residencias sem medição no mês atual
+    @GetMapping("/semmedicao")
+    public List<Residencia> getResidenciasSemMedicao() {
+        return repo.findBySemMedicao();
+    } 
 
     // PUT -> Atualiza os dados de uma residência existente com base no ID informado.
     // Se o registro for encontrado, atualiza o número da residência e salva as alterações no banco de dados.
