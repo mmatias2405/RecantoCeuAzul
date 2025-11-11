@@ -35,7 +35,6 @@
                         <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-md-end"
                         aria-labelledby="navbarDarkDropdownMenuLink">
                         <li><a class="dropdown-item" href="/consumo">Registro de Consumo</a></li>
-                        <li><a class="dropdown-item" href="/usuario">Registro de Usuário</a></li>
                         <li><a class="dropdown-item" href="/residencia">Registro de Residência</a></li>
                         <li><a class="dropdown-item" href="/logout">Logout</a></li>
                     </ul>
@@ -46,11 +45,13 @@
     </nav>
 </header>
 <main>
-    <form class="form-signin">
+    <form class="form-signin" method="post" action="/registrarResidencia">
+        <div th:if="${mensagemSucesso}" th:text="${mensagemSucesso}" class="alert alert-success" role="alert"></div>
+        <div th:if="${mensagem}" th:text="${mensagem}" class="alert alert-danger" role="alert"></div>
         <h1 class="h3 mb-3 font-weight-normal">Registrar Residência</h1>
         <div class="mb-3">
             <label for="nomeSetor" class="sr-only">Insira o número da Residencia</label>
-            <input type="number" step="1" id="numero" class="form-control" placeholder="Número da Residência" required>
+            <input type="number" step="1" id="numero" class="form-control" name="numero" placeholder="Número da Residência" required>
         </div>
         <div class="mb-3 d-flex justify-content-center">
             <button type="submit" class="btn btn-block btn-primary">Registrar</button>

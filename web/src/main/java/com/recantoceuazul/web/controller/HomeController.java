@@ -367,26 +367,6 @@ public class HomeController {
         redirectAttributes.addFlashAttribute("mensagem", "Houve um erro inesperado no registro, tente novamente!");
         return "redirect:/dashboard";
     }    
-    @GetMapping("/usuario")
-    public String getUsuario(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
-        
-        Ator usuario = (Ator) session.getAttribute("usuarioLogado");
-        if (usuario == null) {
-            // Não está logado, redireciona para a home (login)
-            redirectAttributes.addFlashAttribute("mensagem", "Faça Login para acessar essa página!");
-            return "redirect:/";
-        }
-        if(usuario.getPapel() == null){
-            redirectAttributes.addFlashAttribute("mensagem", "O administrador do sistema ainda não autorizou seu acesso a plataforma, entre em contato com ele para normalizar a situação");
-            return "redirect:/";
-        }
-        if (usuario.getPapel().equals("MORAR")){
-            return "redirect:/morador?residencia=0";
-            
-        }
-        model.addAttribute("nomeUsuario", usuario.getNome());
-        return "usuario";
-    }
     @GetMapping("/residencia")
     public String getResidencia(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
         
@@ -407,6 +387,43 @@ public class HomeController {
         model.addAttribute("nomeUsuario", usuario.getNome());
         return "registrarResidencia";
     }
+    @PostMapping("/registrarResidencia")
+    public String postRegistrarResidencia(@ModelAttribute Residencia residencia, RedirectAttributes redirectAttributes, HttpSession session) {
+        Ator usuario = (Ator) session.getAttribute("usuarioLogado");
+        if (usuario == null) {
+            // Não está logado, redireciona para a home (login)
+            redirectAttributes.addFlashAttribute("mensagem", "Faça Login para acessar essa página!");
+            return "redirect:/";
+        }
+        if(usuario.getPapel() == null){
+            redirectAttributes.addFlashAttribute("mensagem", "O administrador do sistema ainda não autorizou seu acesso a plataforma, entre em contato com ele para normalizar a situação");
+            return "redirect:/";
+        }
+        if (usuario.getPapel().equals("MORAR")){
+            return "redirect:/morador?residencia=0";
+            
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Residencia> request = new HttpEntity<>(residencia, headers);
+        try {
+            ResponseEntity<Residencia> response = restTemplate.postForEntity(API_URL + "/residencia", request, Residencia.class);
+            
+            if (response.getStatusCode().is2xxSuccessful()) {
+                redirectAttributes.addFlashAttribute("mensagemSucesso", "Residencia registrada com sucesso");
+                return "redirect:/residencia"; 
+            }
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 401) {
+                redirectAttributes.addFlashAttribute("mensagem", "Houve um erro no registro, tente novamente!");
+                return "redirect:/residencia";
+            }
+        }
+        
+        redirectAttributes.addFlashAttribute("mensagem", "Houve um erro inesperado no registro, tente novamente!");
+        return "redirect:/cadastro";
+    }
+    
     @GetMapping("/logout")
     public String logout(HttpSession session, RedirectAttributes redirectAttributes) {
         session.invalidate(); // Limpa/invalida a sessão
