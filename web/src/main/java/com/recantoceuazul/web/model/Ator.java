@@ -13,6 +13,8 @@ import java.util.HashSet;
 public class Ator {
    
     private int id; // Identificador único do ator (gerado automaticamente pelo banco de dados)
+   
+
     private String nome;     // Nome completo do ator
     private String email;    // Endereço de e-mail do ator (também usado para login)
     private String telefone; // Telefone de contato do ator
@@ -36,7 +38,9 @@ public class Ator {
 
     // Getters e Setters (acessores e modificadores de atributos)
     public int getId() { return id; }
-
+    public void setId(int id) {
+            this.id = id;
+        }
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
 

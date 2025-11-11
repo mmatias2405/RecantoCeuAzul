@@ -1,5 +1,6 @@
 package com.recantoceuazul.web.controller;
 
+import com.recantoceuazul.web.dto.*;
 import com.recantoceuazul.web.model.*;
 
 import java.util.Arrays;
@@ -16,9 +17,13 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+
 import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
+
 
 
 
@@ -129,13 +134,13 @@ public class HomeController {
         }
         int residenciaIdBusca;
         if(podeVerEssaResidencia)
-            residenciaIdBusca = residenciaId;
+        residenciaIdBusca = residenciaId;
         else{
             Residencia r = usuario.getResidencias().iterator().next();
             residenciaIdBusca = r.getId();
             model.addAttribute("residenciaNumero", r.getNumero());
         }   
-            
+        
         
         ResponseEntity<Medicao[]> responseMedicoes = restTemplate.getForEntity(API_URL + "/medicao/residencia/" + residenciaIdBusca, Medicao[].class);
         List<Medicao>medicoes = Arrays.asList(responseMedicoes .getBody());
@@ -165,7 +170,24 @@ public class HomeController {
         }
         
         // 3. Se chegou aqui, ele está logado!
-        return "dashboardAdmin"; // Retorna a página "dashboard.html" (por exemplo)
+        ResponseEntity<Residencia[]> responseResidencia = restTemplate.getForEntity(API_URL + "/residencia/semmedicao", Residencia[].class);
+        List<Residencia>residenciasSemMedicao = Arrays.asList(responseResidencia .getBody());
+        model.addAttribute("residenciasSemMedicao", residenciasSemMedicao);
+        
+        ResponseEntity<Residencia[]> responseAllResidencia = restTemplate.getForEntity(API_URL + "/residencia", Residencia[].class);
+        List<Residencia>allResidencias= Arrays.asList(responseAllResidencia .getBody());
+        model.addAttribute("allResidencias", allResidencias);
+        
+        
+        ResponseEntity<Ator[]> responseAtor = restTemplate.getForEntity(API_URL + "/ator/sempapel", Ator[].class);
+        List<Ator>atoresSemPapel = Arrays.asList(responseAtor .getBody());
+        model.addAttribute("atoresSemPapel", atoresSemPapel);
+        
+        ResponseEntity<DadosGerais[]> responseDadosGerais = restTemplate.getForEntity(API_URL + "/medicao/dadosgerais", DadosGerais[].class);
+        List<DadosGerais>dadosGerais = Arrays.asList(responseDadosGerais.getBody());
+        model.addAttribute("dadosGerais", dadosGerais);
+        
+        return "dashboardAdmin"; 
     }
     
     @GetMapping("/consumo")
@@ -183,7 +205,7 @@ public class HomeController {
         }
         if (usuario.getPapel().equals("MORAR")){
             return "redirect:/morador?residencia=0";
-
+            
         }
         
         ResponseEntity<Medicao[]> responseMedicoes = restTemplate.getForEntity(API_URL + "/medicao", Medicao[].class);
@@ -192,7 +214,142 @@ public class HomeController {
         return "consumo";
     }
     
+    @PostMapping("/registrarConsumo")
+    public String postRegistroConsumo(@ModelAttribute MedicaoRequest medicao, RedirectAttributes redirectAttributes, HttpSession session) {
+        Ator usuario = (Ator) session.getAttribute("usuarioLogado");
+        if (usuario == null) {
+            // Não está logado, redireciona para a home (login)
+            redirectAttributes.addFlashAttribute("mensagem", "Faça Login para acessar essa página!");
+            return "redirect:/";
+        }
+        if(usuario.getPapel() == null){
+            redirectAttributes.addFlashAttribute("mensagem", "O administrador do sistema ainda não autorizou seu acesso a plataforma, entre em contato com ele para normalizar a situação");
+            return "redirect:/";
+        }
+        if (usuario.getPapel().equals("MORAR")){
+            return "redirect:/morador?residencia=0";
+        }
+        
+        medicao.setAtorId(usuario.getId());
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<MedicaoRequest> request = new HttpEntity<>(medicao, headers);
+        
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(API_URL + "/medicao", request, String.class);
+            
+            if (response.getStatusCode().is2xxSuccessful()) {
+                redirectAttributes.addFlashAttribute("mensagemSucesso", "Registro efetuado com sucesso");
+                return "redirect:/dashboard";
+            }
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 401) {
+                redirectAttributes.addFlashAttribute("mensagem", "Houve um erro no registro, tente novamente!");
+                return "redirect:/dashboard";
+            }
+        }
+        
+        redirectAttributes.addFlashAttribute("mensagem", "Houve um erro inesperado no registro, tente novamente!");
+        return "redirect:/dashboard";
+    }
+    @PostMapping("/aprovarAtor")
+    public String postAprovarAtor(@RequestBody AprovacaoRequest aprovacao, RedirectAttributes redirectAttributes, HttpSession session) {
+        Ator usuario = (Ator) session.getAttribute("usuarioLogado");
+        if (usuario == null) {
+            // Não está logado, redireciona para a home (login)
+            redirectAttributes.addFlashAttribute("mensagem", "Faça Login para acessar essa página!");
+            return "redirect:/";
+        }
+        if(usuario.getPapel() == null){
+            redirectAttributes.addFlashAttribute("mensagem", "O administrador do sistema ainda não autorizou seu acesso a plataforma, entre em contato com ele para normalizar a situação");
+            return "redirect:/";
+        }
+        if (usuario.getPapel().equals("MORAR")){
+            return "redirect:/morador?residencia=0";
+        }
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Ator> request = new HttpEntity<>(new Ator(), headers);
+        
+        if(aprovacao.getPapel().equals("ADMIN")){
+            ResponseEntity<Ator> response = restTemplate.exchange(
+            API_URL + "/ator/"+aprovacao.getAtorId()+"/toadmin",
+            HttpMethod.PUT,
+            request,
+            Ator.class // O que você espera receber de volta (pode ser String.class ou Void.class)
+            );
+            if (response.getStatusCode().is2xxSuccessful()) {
+                redirectAttributes.addFlashAttribute("mensagemSucesso", "Usuário aprovado com sucesso");
+                return "redirect:/dashboard";
+            }
+            else{
+                redirectAttributes.addFlashAttribute("mensagem", "Houve um erro no registro, tente novamente!");
+                return "redirect:/dashboard";
+            }
+        }
+        if(aprovacao.getPapel().equals("FISCA")){
+            ResponseEntity<Ator> response = restTemplate.exchange(
+            API_URL + "/ator/"+aprovacao.getAtorId()+"/tofiscal",
+            HttpMethod.PUT,
+            request,
+            Ator.class // O que você espera receber de volta (pode ser String.class ou Void.class)
+            );
+            if (response.getStatusCode().is2xxSuccessful()) {
+                redirectAttributes.addFlashAttribute("mensagemSucesso", "Usuário aprovado com sucesso");
+                return "redirect:/dashboard";
+            }
+            else{
+                redirectAttributes.addFlashAttribute("mensagem", "Houve um erro no registro, tente novamente!");
+                return "redirect:/dashboard";
+            }
+        }
+        if(aprovacao.getPapel().equals("MORAR")){
+            Ator a = new Ator();
+            a.setId(aprovacao.getAtorId());
+            request = new HttpEntity<>(a, headers);
+            for(int residencia : aprovacao.getResidencias()){
+                ResponseEntity<Ator> response = restTemplate.exchange(
+                API_URL + "/ator/residencia/" + residencia,
+                HttpMethod.PUT,
+                request,
+                Ator.class // O que você espera receber de volta (pode ser String.class ou Void.class)
+                );
+                if(!response.getStatusCode().is2xxSuccessful()){
+                    redirectAttributes.addFlashAttribute("mensagem", "Houve um erro no registro, tente novamente!");
+                    return "redirect:/dashboard"; 
+                }
+            }
+            redirectAttributes.addFlashAttribute("mensagemSucesso", "Usuário aprovado com sucesso");
+            return "redirect:/dashboard";      
+        }        
+        redirectAttributes.addFlashAttribute("mensagem", "Houve um erro inesperado no registro, tente novamente!");
+        return "redirect:/dashboard";
+    }    
+    @GetMapping("/usuario")
+    public String getUsuario(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
 
+        Ator usuario = (Ator) session.getAttribute("usuarioLogado");
+        if (usuario == null) {
+            // Não está logado, redireciona para a home (login)
+            redirectAttributes.addFlashAttribute("mensagem", "Faça Login para acessar essa página!");
+            return "redirect:/";
+        }
+        if(usuario.getPapel() == null){
+            redirectAttributes.addFlashAttribute("mensagem", "O administrador do sistema ainda não autorizou seu acesso a plataforma, entre em contato com ele para normalizar a situação");
+            return "redirect:/";
+        }
+        if (usuario.getPapel().equals("MORAR")){
+            return "redirect:/morador?residencia=0";
+            
+        }
+        
+        ResponseEntity<Medicao[]> responseMedicoes = restTemplate.getForEntity(API_URL + "/medicao", Medicao[].class);
+        List<Medicao>medicoes = Arrays.asList(responseMedicoes .getBody());
+        model.addAttribute("medicoes", medicoes);
+        return "usuario";
+    }
+    
     @GetMapping("/logout")
     public String logout(HttpSession session, RedirectAttributes redirectAttributes) {
         session.invalidate(); // Limpa/invalida a sessão

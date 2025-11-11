@@ -86,7 +86,7 @@ GROUP BY
     DATE_FORMAT(m.data_medicao, '%m/%Y'), 
     r_total.total_residencias
 ORDER BY
-	DATE_FORMAT(m.data_medicao, '%m/%Y');
+	DATE_FORMAT(m.data_medicao, '%m/%Y') DESC;
 SELECT * FROM v_dashboard_mensal;
 
 /* Populando o Banco de dados */
