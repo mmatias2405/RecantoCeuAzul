@@ -24,22 +24,27 @@
 
 <body>
     <header>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-body-tertiary gradient-custom">
+        <nav class="navbar navbar-expand-md navbar-dark bg-body-tertiary gradient-custom">
             <div class="container-fluid">
-                <a class="navbar-brand" href="/dashboard">Residencial Recanto do Céu Azul</a>
+                                <a class="navbar-brand" href="/morador?residencia=0">Residencial Recanto do Céu Azul</a>
                 <div class="d-flex">
                     <ul class="navbar-nav">
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button"
+                            <a class="nav-link dropdown-toggle text-white" href="#" id="navbarDarkDropdownMenuLink" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
-                            Admin</a>
-                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-md-end" aria-labelledby="navbarDarkDropdownMenuLink">
-                                <li><a class="dropdown-item" href="/logout">Logout</a></li>
-                            </ul>
-                        </li>
+                            Bem Vindo(a)!&nbsp;<span th:text=" ${nomeUsuario}"> </span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-md-end"
+                        aria-labelledby="navbarDarkDropdownMenuLink">
+                        <li><a class="dropdown-item" href="/consumo">Registro de Consumo</a></li>
+                        <li><a class="dropdown-item" href="/usuario">Registro de Usuário</a></li>
+                        <li><a class="dropdown-item" href="/residencia">Registro de Residência</a></li>
+                        <li><a class="dropdown-item" href="/logout">Logout</a></li>
                     </ul>
-                </div>
-            </div>
+                </li>
+            </ul>
+        </div>
+
         </nav>
     </header>
     <div class="container-fluid">
