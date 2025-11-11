@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="pt-br">
 <head>
@@ -26,13 +27,13 @@
     <header>
         <nav class="navbar navbar-expand-md navbar-dark bg-body-tertiary gradient-custom">
             <div class="container-fluid">
-                                <a class="navbar-brand" href="/morador?residencia=0">Residencial Recanto do Céu Azul</a>
+                <a class="navbar-brand" href="/morador?residencia=0">Residencial Recanto do Céu Azul</a>
                 <div class="d-flex">
                     <ul class="navbar-nav">
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle text-white" href="#" id="navbarDarkDropdownMenuLink" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
-                            Bem Vindo(a)!&nbsp;<span th:text=" ${nomeUsuario}"> </span>
+                            Bem Vindo(a)!&nbsp;<span>Administrador Sistema</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-md-end"
                         aria-labelledby="navbarDarkDropdownMenuLink">
@@ -44,175 +45,168 @@
                 </li>
             </ul>
         </div>
-
-        </nav>
-    </header>
-    <div class="container-fluid">
-        <div class="row justify-content-center g-2">
-            <div class="col-lg-10 col-md-12 col-sm-12 p-2">
-                <h5 class="my-3"><span th:text=" ${residenciasSemConsumo}"></span>&nbsp;Residências sem registro de consumo desse mês</h5>
-                <table class="table table-bordered align-middle">
-                    <thead>
-                        <tr>
-                            <th class="text-center">Número da Residência</th>
-                            <th class="text-center">Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="text-center">120</td>
-                            <td class="text-center">
-                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#consumoModal">
-                                    Registrar
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <hr>
-            <div class="col-lg-12 col-md-12 col-sm-12 p-2">
-                <h5 class="my-3">Todas os registros de consumo</h5>
-                <table class="table table-bordered align-middle">
-                    <thead>
-                        <tr>
-                            <th class="text-center">Ação</th>
-                            <th class="text-center">Mês/Ano</th>
-                            <th class="text-center">Residência</th>
-                            <th class="text-center">Marcação no Hidrômetro</th>
-                            <th class="text-center">Consumo</th>
-                            <th class="text-center">Data da Leitura</th>
-                            <th class="text-center">Responsável pela Leitura</th>         
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="m : ${medicoes}">
-                            <td class="text-center">
-                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#consumoEdit" data-volume="${m.volumeAgua}" data-consumo="{m.delta}" data-data="{#temporals.format(m.dataMedicao, 'dd/MM/yyyy, HH:mm')}" data-ator="{m.ator.nome}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
-                                        <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
-                                    </svg>
-                                </button>
-                            </td>
-                            <td class="text-center" th:text="${#temporals.format(m.dataMedicao, 'MM/yyyy')}"></td>
-                            <td class="text-center" th:text="${m.residencia.numero}"></td>
-                            <td class="text-center" th:text="${m.volumeAgua}"></td>
-                            <td class="text-center" th:text="${m.delta}"></td>
-                            <td class="text-center" th:text="${#temporals.format(m.dataMedicao, 'dd/MM/yyyy, HH:mm')}"></td>
-                            <td class="text-center" th:text="${m.ator.nome}"></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        
+    </nav>
+</header>
+<div class="container-fluid">
+    <div class="row justify-content-center g-2">
+        <div class="col-lg-12 col-md-12 col-sm-12 p-2">
+            <div th:if="${mensagemSucesso}" th:text="${mensagemSucesso}" class="alert alert-success" role="alert"></div>
+            <div th:if="${mensagem}" th:text="${mensagem}" class="alert alert-danger" role="alert"></div>
+            <h5 class="my-3">Todas os registros de consumo</h5>
+            <table class="table table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th class="text-center">Ação</th>
+                        <th class="text-center">Mês/Ano</th>
+                        <th class="text-center">Residência</th>
+                        <th class="text-center">Marcação no Hidrômetro</th>
+                        <th class="text-center">Consumo</th>
+                        <th class="text-center">Data da Leitura</th>
+                        <th class="text-center">Responsável pela Leitura</th>         
+                    </tr>
+                </thead>
+                <tbody id="corpoTabela">
+                </tbody>
+            </table>
         </div>
-        
-        
-        <!-- MODAL CONSUMO -->
-        <div
-        class="modal fade"
-        id="consumoModal"
-        tabindex="-1"
-        aria-labelledby="consumoModalLabel"
-        aria-hidden="true"
-        >
+    </div>
+    <div class="modal fade" id="consumoEdit" tabindex="-1" aria-labelledby="consumoEditLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="consumoModalLabel">Registrar Consumo</h5>
-                    <button
-                    type="button"
-                    class="btn-close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                    ></button>
+                    <h5 class="modal-title" id="consumoEditLabel">Editar Medição</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="consumoForm">
-                        <div class="mb-3">
-                            <label for="setor" class="form-label">Selecione a residência</label>
-                            <select class="form-select" aria-label="Default select example" id="setor">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3">3</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="volume" class="sr-only">Insira o leitura do Hidrômetro(m³)</label>
-                            <input type="number"step="0.1" id="volume" class="form-control" placeholder="Volume" required>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button
-                    type="button"
-                    class="btn btn-secondary"
-                    data-bs-dismiss="modal"
-                    >
-                    Cancelar
-                </button>
-                <button type="button" class="btn btn-primary" id="saveConsumolBtn">
-                    Registrar
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="consumoEdit" tabindex="-1" aria-labelledby="consumoEditLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="consumoEditLabel">Editar Medição</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">
-                        <strong>Marcação no Hidrômetro:</strong>
-                        <span id="modal-volume"></span>
-                    </li>
-                    <li class="list-group-item">
-                        <strong>Consumo (Delta):</strong>
-                        <span id="modal-consumo"></span>
-                    </li>
-                    <li class="list-group-item">
-                        <strong>Data da Leitura:</strong>
-                        <span id="modal-data"></span>
-                    </li>
-                    <li class="list-group-item">
-                        <strong>Responsável pela Leitura:</strong>
-                        <span id="modal-ator"></span>
-                    </li>
-                    <li class="list-group-item">
-                        <form id="consumoForm" >
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <strong>Marcação no Hidrômetro:</strong>
+                            <span id="modal-volume"></span>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Consumo (Delta):</strong>
+                            <span id="modal-consumo"></span>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Data da Leitura:</strong>
+                            <span id="modal-data"></span>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Responsável pela Leitura:</strong>
+                            <span id="modal-ator"></span>
+                        </li></ul>
+                        <form id="consumoForm" action="/alterarMedicao" method="post">
+                            
                             <div class="mb-3">
                                 <label for="volume" class="sr-only">Insira a nova leitura do Hidrômetro(m³)</label>
-                                <input type="number"step="0.1" id="volume" class="form-control" placeholder="Volume" value="modal-volume" required>
+                                <input type="number"step="0.1" id="volume" class="form-control" placeholder="Volume" name="volumeAgua" required>
+                                <input type="hidden" name="id" id="idMedicao">
+                            </div>
+                            
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                <button type="submit" class="btn btn-primary" id="saveConsumolEditBtn">
+                                    Registrar
+                                </button>
                             </div>
                         </form>
-                    </li>
-                </ul>
-                
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                <button type="button" class="btn btn-primary" id="saveConsumolEditBtn">
-                    Registrar
-                </button>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</div>
-<!-- Bootstrap JavaScript Libraries -->
-<script
-src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
-integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
-crossorigin="anonymous"
-></script>
-
-<script
-src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"
-integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+"
-crossorigin="anonymous"
-></script>
-</body>
-</html>
+        <!-- Bootstrap JavaScript Libraries -->
+        <script
+        src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+        crossorigin="anonymous"
+        ></script>
+        
+        <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"
+        integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+"
+        crossorigin="anonymous"
+        ></script>
+        <script th:inline="javascript">
+            var medicoes = /*[[${medicoes}]]*/ [];        
+            document.addEventListener("DOMContentLoaded", function () {
+                const corpoTabela = document.getElementById('corpoTabela')
+                corpoTabela.innerHTML = '';
+                medicoes.forEach(m => {
+                    var dataFormat = formataData(m.dataMedicao);
+                    var mesAno = formataDataMesAno(m.dataMedicao);
+                    
+                    const trHTML = `
+                    <tr>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#consumoEdit" data-id="${m.id}" data-volume="${m.volumeAgua}" data-consumo="${m.delta}" data-data="${dataFormat}" data-ator="${m.ator.nome}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+                                    <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
+                                </svg>
+                            </button>
+                        </td>
+                        <td class="text-center">${mesAno}</td>
+                        <td class="text-center">${m.residencia.numero}</td>
+                        <td class="text-center">${m.volumeAgua}</td>
+                        <td class="text-center">${m.delta}</td>
+                        <td class="text-center">${dataFormat}</td>
+                        <td class="text-center">${m.ator.nome}</td>
+                    </tr>
+            `;
+                    corpoTabela.innerHTML += trHTML;
+                });
+                
+                const consumoEdit = document.getElementById("consumoEdit");
+                consumoEdit.addEventListener("show.bs.modal", function (event) {
+                    const button = event.relatedTarget;
+                    
+                    const volume = button.getAttribute("data-volume");
+                    const consumo = button.getAttribute("data-consumo");
+                    const data = button.getAttribute("data-data");
+                    const ator= button.getAttribute("data-ator");
+                    const id = button.getAttribute("data-id");
+                    
+                    consumoEdit.querySelector("#modal-volume").textContent = volume;
+                    consumoEdit.querySelector("#modal-consumo").textContent = consumo;
+                    consumoEdit.querySelector("#modal-data").textContent = data;
+                    consumoEdit.querySelector("#modal-ator").textContent = ator;
+                    document.getElementById("idMedicao").value = id; 
+                });
+                
+                consumoEdit.addEventListener("hidden.bs.modal", function (event) {
+                    document.getElementById("consumoForm").reset();
+                });
+            });
+            function pad(num) {
+                return num < 10 ? '0' + num : num;
+            }
+            function formataData(data){
+                const dataMedicao = new Date(data);
+                
+                const dia = pad(dataMedicao.getDate());
+                const mes = pad(dataMedicao.getMonth() + 1); // JS conta meses de 0-11
+                const ano = dataMedicao.getFullYear();
+                const hora = pad(dataMedicao.getHours());
+                const minuto = pad(dataMedicao.getMinutes());
+                
+                // Concatena na string final
+                const dataFormatada = `${dia}/${mes}/${ano}, ${hora}:${minuto}`;
+                
+                return dataFormatada;
+            }
+            function formataDataMesAno(data){
+                const dataMedicao = new Date(data);
+                
+                const mes = pad(dataMedicao.getMonth() + 1); // JS conta meses de 0-11
+                const ano = dataMedicao.getFullYear();
+                
+                // Concatena na string final
+                const dataFormatada = `${mes}/${ano}`;
+                
+                return dataFormatada;
+            }
+            
+        </script>
+    </body>
+    </html>
+    

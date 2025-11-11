@@ -64,11 +64,9 @@ public class MedicaoController {
     @PutMapping("/{id}")
     public Medicao atualizar(@PathVariable Integer id, @RequestBody Medicao atualizado) {
         return repo.findById(id).map(existente -> {
+            float deltaUpdate = atualizado.getVolumeAgua() - existente.getVolumeAgua();
             existente.setVolumeAgua(atualizado.getVolumeAgua());
-            existente.setDataMedicao(atualizado.getDataMedicao());
-            existente.setResidencia(atualizado.getResidencia());
-            existente.setDelta(atualizado.getDelta());
-            existente.setAtor(atualizado.getAtor());
+            existente.setDelta(existente.getDelta() + deltaUpdate);
             return repo.save(existente);
         }).orElse(null);
     }
