@@ -73,3 +73,5 @@ mysql_data/
 # --- Node.js (caso adicione frontend com npm/yarn no futuro) ---
 node_modules/
 dist/
+
+application-dev.properties
