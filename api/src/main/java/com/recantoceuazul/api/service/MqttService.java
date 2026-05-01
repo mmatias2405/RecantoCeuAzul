@@ -1,5 +1,8 @@
 package com.recantoceuazul.api.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
@@ -7,11 +10,32 @@ import org.springframework.stereotype.Service;
 @Service
 public class MqttService {
 
+    @Autowired
+    private InfluxDbService influxDbService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @ServiceActivator(inputChannel = "mqttInputChannel")
     public void handleMessage(Message<?> message) {
         String payload = message.getPayload().toString();
-        System.out.println("Mensagem recebida do MQTT: " + payload);
         
-        // Aqui você coloca sua lógica de negócio (salvar no banco, etc)
+        try {
+            // Converte a string JSON recebida em um objeto navegável
+            JsonNode jsonNode = objectMapper.readTree(payload);
+
+            // Valida se os campos necessários existem no JSON antes de tentar ler
+            if (jsonNode.has("residencia") && jsonNode.has("volume_litros")) {
+                
+                int residencia = jsonNode.get("residencia").asInt();
+                double volumeLitros = jsonNode.get("volume_litros").asDouble();
+
+                // Dispara a gravação no banco de dados em série temporal
+                influxDbService.processarMensagemMqtt(residencia, volumeLitros);
+                
+            }  
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
