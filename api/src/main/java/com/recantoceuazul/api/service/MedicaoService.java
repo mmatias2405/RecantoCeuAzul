@@ -1,7 +1,9 @@
 package com.recantoceuazul.api.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -11,10 +13,15 @@ import com.recantoceuazul.api.repository.MedicaoRepository;
 import com.recantoceuazul.api.repository.ResidenciaRepository;
 import com.recantoceuazul.api.repository.AtorRepository;
 import com.recantoceuazul.api.model.*;
+import com.influxdb.query.FluxRecord;
+import com.influxdb.query.FluxTable;
 import com.recantoceuazul.api.dto.MedicaoRequest;
 
 @Service
 public class MedicaoService {
+
+    @Autowired
+    private InfluxDbService influxDbService;
 
     @Autowired
     private MedicaoRepository medicaoRepository;
@@ -68,5 +75,36 @@ public class MedicaoService {
 
         // 5. Salvar no banco de dados
         return medicaoRepository.save(novaMedicao);
+    }
+    @Scheduled(cron = "0 0 0 1 * ?")
+    public void consolidarConsumoMesAnterior(){
+       List<FluxTable>tables = influxDbService.medicoesDoMesPassado();
+
+        for (FluxTable table : tables) {
+            for (FluxRecord record : table.getRecords()) {
+                int residenciaId = Integer.parseInt((String)record.getValueByKey("residenciaId"));
+                Float totalLitros = ((Double) record.getValue()).floatValue();
+                Float leituraHidrante;
+                Optional<Medicao> ultimaMedicaoOpt = medicaoRepository
+                .findTopByResidenciaIdOrderByDataMedicaoDesc(residenciaId);
+                if (ultimaMedicaoOpt.isPresent()) {
+                    Medicao ultimaMedicao = ultimaMedicaoOpt.get();
+                    leituraHidrante = ultimaMedicao.getVolumeAgua() + totalLitros;                
+                }
+                else{
+                    leituraHidrante = totalLitros;
+                }
+                MedicaoRequest consolidado = new MedicaoRequest();
+                consolidado.setVolumeAgua(leituraHidrante);
+                consolidado.setAtorId(18);
+                consolidado.setResidenciaId(residenciaId);
+
+                try {
+                    registrarNovaMedicao(consolidado);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 }

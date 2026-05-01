@@ -25,13 +25,13 @@ public class MqttService {
             JsonNode jsonNode = objectMapper.readTree(payload);
 
             // Valida se os campos necessários existem no JSON antes de tentar ler
-            if (jsonNode.has("residencia") && jsonNode.has("volume_litros")) {
+            if (jsonNode.has("residenciaId") && jsonNode.has("volume_litros")) {
                 
-                int residencia = jsonNode.get("residencia").asInt();
+                int residenciaId = jsonNode.get("residenciaId").asInt();
                 double volumeLitros = jsonNode.get("volume_litros").asDouble();
 
                 // Dispara a gravação no banco de dados em série temporal
-                influxDbService.processarMensagemMqtt(residencia, volumeLitros);
+                influxDbService.processarMensagemMqtt(residenciaId, volumeLitros);
                 
             }  
         } catch (Exception e) {
