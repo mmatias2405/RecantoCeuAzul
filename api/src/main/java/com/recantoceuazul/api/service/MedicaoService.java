@@ -107,4 +107,18 @@ public class MedicaoService {
             }
         }
     }
+    public float getMedicaoHoje(int residenciaId){
+        Float medicaoHoje;
+        Float totalConsumo = influxDbService.getConsumoHoje(Integer.toString(residenciaId)).floatValue();
+        Optional<Medicao> ultimaMedicaoOpt = medicaoRepository
+        .findTopByResidenciaIdOrderByDataMedicaoDesc(residenciaId);
+        if (ultimaMedicaoOpt.isPresent()) {
+            Medicao ultimaMedicao = ultimaMedicaoOpt.get();
+            medicaoHoje = ultimaMedicao.getVolumeAgua() + totalConsumo;                
+        }
+        else{
+            medicaoHoje = totalConsumo;
+        }
+        return medicaoHoje;
+    }
 }

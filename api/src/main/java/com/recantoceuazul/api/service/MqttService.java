@@ -24,16 +24,19 @@ public class MqttService {
             // Converte a string JSON recebida em um objeto navegável
             JsonNode jsonNode = objectMapper.readTree(payload);
 
+
             // Valida se os campos necessários existem no JSON antes de tentar ler
             if (jsonNode.has("residenciaId") && jsonNode.has("volume_litros")) {
                 
-                int residenciaId = jsonNode.get("residenciaId").asInt();
+                String residenciaId = jsonNode.get("residenciaId").asText();
                 double volumeLitros = jsonNode.get("volume_litros").asDouble();
 
                 // Dispara a gravação no banco de dados em série temporal
                 influxDbService.processarMensagemMqtt(residenciaId, volumeLitros);
-                
-            }  
+            } 
+            else {
+            
+            } 
         } catch (Exception e) {
             e.printStackTrace();
         }

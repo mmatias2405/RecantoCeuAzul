@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
 import java.time.Instant;
 
 @Service
@@ -30,11 +31,11 @@ public class InfluxDbService {
         this.influxDBClient = InfluxDBClientFactory.create(url, token.toCharArray());
     }
 
-    public void processarMensagemMqtt(int residenciaId, double volumeLitros) {
+    public void processarMensagemMqtt(String residenciaId, double volumeLitros) {
         if (volumeLitros <= 0) return; // Não grava dados vazios para poupar disco
 
         Point point = Point.measurement("consumo_agua")
-                .addTag("residenciaId", Integer.toString(residenciaId))
+                .addTag("residenciaId", residenciaId)
                 .addField("volume_litros", volumeLitros)
                 .time(Instant.now(), WritePrecision.MS);
 
@@ -44,17 +45,40 @@ public class InfluxDbService {
 
     public List<FluxTable> medicoesDoMesPassado(){
                 // Query FLUX para somar todo o volume do último mês agrupado por residência
-        String query = String.format(
-            "from(bucket: \"home\") " +
-            "|> range(start: -1mo) " +
-            "|> filter(fn: (r) => r[\"_measurement\"] == \"consumo_agua\") " +
-            "|> filter(fn: (r) => r[\"_field\"] == \"volume_litros\") " +
-            "|> group(columns: [\"residenciaId\"]) " +
-            "|> sum()"
-        );
+        String query = 
+            "import \"date\"\n" +
+            "import \"timezone\"\n" +
+            "option location = timezone.location(name: \"America/Sao_Paulo\")\n" +
+            "startOfThisMonth = date.truncate(t: now(), unit: 1mo)\n" +
+            "startOfLastMonth = date.sub(d: 1mo, from: startOfThisMonth)\n" +
+            "from(bucket: \"home\") \n" +
+            "|> range(start: startOfLastMonth, stop: startOfThisMonth) \n" +
+            "|> filter(fn: (r) => r[\"_measurement\"] == \"consumo_agua\") \n" +
+            "|> filter(fn: (r) => r[\"_field\"] == \"volume_litros\") \n" +
+            "|> group(columns: [\"residenciaId\"]) \n" +
+            "|> sum()";
 
         List<FluxTable> tables = influxDBClient.getQueryApi().query(query, org);
         
         return tables;
+    }
+    public Double getConsumoHoje(String residenciaId) {
+        String query = String.format(
+            "import \"date\"\n" +
+            "import \"timezone\"\n" +
+            "option location = timezone.location(name: \"America/Sao_Paulo\")\n" +
+            "from(bucket: \"home\") \n" +
+            "|> range(start: date.truncate(t: now(), unit: 1mo)) \n" +
+            "|> filter(fn: (r) => r[\"_measurement\"] == \"consumo_agua\") \n" +
+            "|> filter(fn: (r) => r[\"_field\"] == \"volume_litros\") \n" +
+            "|> filter(fn: (r) => r[\"residenciaId\"] == \"%s\") \n" +
+            "|> sum()", residenciaId
+        );
+
+        List<FluxTable> tables = influxDBClient.getQueryApi().query(query, org);
+        if (tables.isEmpty() || tables.get(0).getRecords().isEmpty()) {
+            return 0.0;
+        }
+        return (Double) tables.get(0).getRecords().get(0).getValue();
     }
 }

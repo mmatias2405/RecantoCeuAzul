@@ -112,10 +112,10 @@ INSERT INTO ator (email, telefone, nome, senha, papel) VALUES
 ('marcos.souza@email.com', '(11) 93030-3030', 'Marcos Souza', 'senha123', 'MORAR'),
 ('natalia.vieira@email.com', '(11) 94040-4040', 'Natalia Vieira', 'senha123', 'MORAR'),
 ('paulo.roberto@email.com', '(11) 95050-5050', 'Paulo Roberto', 'senha123', 'MORAR'),
-('raquel.santos@email.com', '(11) 96060-6060', 'Raquel Santos', 'senha123', 'MORAR');
+('raquel.santos@email.com', '(11) 96060-6060', 'Raquel Santos', 'senha123', 'MORAR'),
 
 -- ID 18(Fiscalizaçao Automatica)
-('bot@recanto.com', '(01) 10010-0010', 'Fiscalização Automatica', 'senha123', 'FISCA'), 
+('bot@recanto.com', '(01) 10010-0010', 'Fiscalização Automatica', 'senha123', 'FISCA');
 -- -----------------------------------------------------------------
 -- 2. INSERIR 20 RESIDÊNCIAS
 -- -----------------------------------------------------------------

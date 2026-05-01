@@ -57,6 +57,13 @@ public class MedicaoController {
     public List<Medicao> buscarPorResidencia(@PathVariable Integer id) {
         return medicaoService.listarMedicaoPorResidencia(id);
     }
+
+    // GET -> Retorna a medição atual da residencia.
+    // O ID da residência é passado como parâmetro na URL.
+    @GetMapping("hoje/residencia/{id}")
+    public float buscarConsumoHoje(@PathVariable Integer id) {
+        return medicaoService.getMedicaoHoje(id);
+    }
     
     // PUT -> Atualiza uma medição existente com base no ID informado.
     // Caso a medição exista, seus campos são atualizados com os novos valores enviados na requisição.
@@ -103,6 +110,14 @@ public class MedicaoController {
     @GetMapping("/dadosgerais")
     public List<DadosGeraisProjection> getDadosGerais() {
         return repo.getDadosGerais();
+    }
+
+    //função apenas para teste, vai ser removida depois
+    @PostMapping("/forcar-consolidacao")
+    public ResponseEntity<String> forcarConsolidacao() {
+        System.out.println("Iniciando rotina de teste de consolidação...");
+        medicaoService.consolidarConsumoMesAnterior();
+        return ResponseEntity.ok("Consolidação do mês passado executada e enviada ao MySQL");
     }
     
 }
