@@ -26,11 +26,11 @@ public class InfluxDbService {
         this.influxDBClient = InfluxDBClientFactory.create(url, token.toCharArray());
     }
 
-    public void processarMensagemMqtt(String residenciaId, double volumeLitros) {
+    public void processarMensagemMqtt(int residencia, double volumeLitros) {
         if (volumeLitros <= 0) return; // Não grava dados vazios para poupar disco
 
         Point point = Point.measurement("consumo_agua")
-                .addTag("residencia_id", residenciaId)
+                .addTag("residencia", Integer.toString(residencia))
                 .addField("volume_litros", volumeLitros)
                 .time(Instant.now(), WritePrecision.MS);
 
