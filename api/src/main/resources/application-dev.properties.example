@@ -1,0 +1,37 @@
+# ==============================================================================
+# RECANTO DO CÉU AZUL - TEMPLATE DE CONFIGURAÇÃO DEV
+# Instruções: Copie este arquivo e renomeie para 'application-dev.properties'
+# e preencha as credenciais correspondentes ao seu ambiente local.
+# ==============================================================================
+
+# --- Conexão com o Banco de Dados (MySQL no Docker) ---
+# Aponta para o localhost pois a aplicação roda na máquina host
+spring.datasource.url=jdbc:mysql://localhost:3306/recantoceuazul?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+spring.datasource.username=root
+spring.datasource.password=sua_senha_do_mysql_aqui
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# Configurações do Hibernate para desenvolvimento
+# 'update' atualiza o schema automaticamente ao iniciar (ideal para dev)
+spring.jpa.hibernate.ddl-auto=update
+# Exibe as queries SQL no console para facilitar o debug
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+
+# --- Configurações do Broker MQTT ---
+# Use tcp://localhost:1883 se rodar um broker local, ou o endereço externo
+mqtt.broker.url=tcp://seu_broker_mqtt:1883
+mqtt.broker.username=usuario_mqtt
+mqtt.broker.password=senha_mqtt
+mqtt.broker.client-id=api-client-dev
+mqtt.broker.topic=recanto/vazao
+
+# --- Configuração do InfluxDB (Séries Temporais no Docker) ---
+# Aponta para a porta exposta localmente pelo container do InfluxDB
+influx.url=http://localhost:8086
+influx.token=seu_token_gerado_no_influxdb_aqui
+influx.org=docs
+influx.bucket=home
+
+# --- Porta da API ---
+server.port=8081

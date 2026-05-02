@@ -1,6 +1,6 @@
 # 📦 Recanto Céu Azul — Sistema Completo
 
-Este projeto é composto por duas aplicações Spring Boot (API e Web) e um banco de dados MySQL, todos dockerizados e orquestrados via Docker Compose.
+Este projeto é composto por duas aplicações Spring Boot (API e Web), um banco de dados MySQL e o InfluxDB para séries temporais. A infraestrutura pode ser orquestrada via Docker Compose.
 
 ---
 
@@ -9,107 +9,138 @@ Este projeto é composto por duas aplicações Spring Boot (API e Web) e um banc
 - Java 17 + Spring Boot
 - HTML/CSS + Bootstrap
 - MySQL 8
+- InfluxDB 2
 - Docker + Docker Compose
 
 ---
 
 ## 📦 Pré-requisitos
 
-Antes de iniciar, você precisa ter o **Docker** e o **Docker Compose** instalados na sua máquina.
+Para rodar o projeto, você precisará das seguintes ferramentas instaladas:
 
-- 🔗 [Download do Docker Desktop (Windows/Mac)](https://www.docker.com/products/docker-desktop/)
-- 🐧 [Instruções de instalação do Docker no Linux](https://docs.docker.com/engine/install/)
+- **Docker e Docker Compose:**
+  - 🔗 [Docker Desktop (Windows/Mac)](https://www.docker.com/products/docker-desktop/)
+  - 🐧 [Instalação no Linux](https://docs.docker.com/engine/install/)
+- **Java 17 (JDK)** e **Maven** (Apenas para o Ambiente de Desenvolvimento)
 
-> Verifique se o Docker está funcionando corretamente executando `docker --version` no terminal.
+> Verifique se o Docker está funcionando executando `docker --version` no terminal.
 
 ---
 
-## ⚙️ Configuração
+## ⚙️ Configuração Inicial
 
 1. **Clone o repositório:**
-
    ```bash
-   git clone https://github.com/mmatias2405/RecantoCeuAzul.git
+   git clone [https://github.com/mmatias2405/RecantoCeuAzul.git](https://github.com/mmatias2405/RecantoCeuAzul.git)
    cd RecantoCeuAzul
    ```
 
-2. **Configure o ambiente:**
-
-   Renomeie o arquivo `.env.example` para `.env`:
-
+2. **Configure as variáveis de ambiente (Docker):**
+   Copie o arquivo de exemplo e configure suas credenciais.
+   
+   **No Linux:**
    ```bash
+   cp .env.example .env
+   ```
+   **No Windows:**
+   ```cmd
    copy .env.example .env
    ```
-
-   Edite o arquivo `.env` preenchendo as variáveis com os valores desejados:
-
-   ```env
-   # Banco de dados
-   MYSQL_USER=root
-   MYSQL_ROOT_PASSWORD= #Sua senha aqui
-   MYSQL_DATABASE=recantoceuazul
-   MYSQL_PORT=3306
-
-   # API
-   API_PORT=8081
-
-   # WEB
-   WEB_PORT=8080
-   ```
+   Edite o arquivo `.env` gerado com os seus dados (senhas, portas, tokens).
 
 ---
 
 ## ▶️ Executando a aplicação
 
-No Windows, basta executar o arquivo `start.bat` que:
+Existem duas maneiras de rodar este projeto: **Modo Completo** (para testes finais ou produção) e **Modo de Desenvolvimento** (para programar e testar de forma rápida).
 
-- Compila os projetos da API e do frontend
-- Sobe os containers Docker
-- Abre o navegador automaticamente na aplicação web
+### Opção 1: Modo Completo (Full Docker)
+Neste formato, todos os quatro containers (MySQL, InfluxDB, API e Web) são iniciados simultaneamente. 
 
+**⚠️ Importante:** Como o código da aplicação é compilado dentro do container, qualquer alteração no código exigirá que você recompile as imagens inteiras para testar. Esse método não é recomendado para desenvolvimento ativo.
+
+Para iniciar tudo:
 ```bash
-start.bat
+docker compose up -d --build
 ```
 
-> Aguarde alguns segundos até que todos os serviços estejam no ar.
-
 A aplicação estará disponível em:
-
 - 🌐 **Frontend (Web):** [http://localhost:8080](http://localhost:8080)
 - 🔗 **Backend (API):** [http://localhost:8081](http://localhost:8081)
-- 🛢️ **MySQL:** acessível localmente na porta 3307 (ou a que você definir no `.env`)
+
+---
+
+### Opção 2: Modo de Desenvolvimento (Recomendado para codar)
+Para ter agilidade na criação de novas features, você deve subir apenas os serviços de infraestrutura (bancos de dados) via Docker e rodar o Spring Boot diretamente na sua máquina.
+
+**Passo 1: Subir apenas os bancos de dados**
+```bash
+docker compose up -d db influxdb
+```
+
+**Passo 2: Configurar o `application-dev.properties` da API**
+Dentro do diretório `api/src/main/resources/`, existe um template de configuração preparado para o ambiente local.
+
+Copie este arquivo para criar a sua configuração real (que será ignorada pelo Git por segurança):
+
+**No Linux:**
+```bash
+cp api/src/main/resources/application-dev.properties.example api/src/main/resources/application-dev.properties
+```
+**No Windows:**
+```cmd
+copy api\src\main\resources\application-dev.properties.example api\src\main\resources\application-dev.properties
+```
+Edite o novo arquivo `application-dev.properties` preenchendo as senhas locais e o Token gerado pelo InfluxDB.
+
+**Passo 3: Executar a API e a Web localmente com o profile `dev`**
+
+Abra dois terminais (um na pasta `api` e outro na pasta `web`) e execute:
+
+**No Linux:**
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+**No Windows:**
+```cmd
+mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=dev
+```
+Dessa forma, ao alterar qualquer classe Java ou arquivo HTML, basta reiniciar o serviço localmente sem precisar reconstruir containers no Docker.
 
 ---
 
 ## ⏹️ Parando a aplicação
 
-Para parar todos os serviços e containers, execute:
+Para parar e remover todos os serviços e containers do Docker, execute na raiz do projeto:
 
 ```bash
-stop.bat
+docker compose down
 ```
 
 ---
 
 ## 🐞 Problemas comuns
 
-- **Erro 500 ao abrir a aplicação?**  
-  Isso pode ocorrer se o navegador abrir antes dos serviços estarem prontos. Basta recarregar a página após alguns segundos.
-
+- **Erro de Conexão no Banco (Modo Dev)?**  
+  Certifique-se de que a porta `3306` mapeada no `docker-compose.yml` não está sendo usada por uma instalação local do MySQL na sua máquina.
 - **Portas já estão em uso?**  
-  Edite o arquivo `.env` e altere as portas para outras disponíveis na sua máquina.
+  Edite o arquivo `.env` e altere as portas `API_PORT` e `WEB_PORT` para outras disponíveis.
+- **InfluxDB recusando conexão?**
+  Verifique se o container iniciou corretamente e se o token inserido no `application-dev.properties` é válido.
 
 ---
 
 ## 📁 Estrutura do projeto
 
 ```bash
-├── api/              # Projeto Spring Boot (API)
-├── web/              # Aplicação Web (Frontend)
-├── mysql-init/       # Arquivo de inicialização do Banco de Dados
+├── api/
+│   ├── src/main/resources/
+│   │   ├── application.properties               # Configuração padrão (Docker)
+│   │   └── application-dev.properties.example   # Template para ambiente local
+├── web/                                         # Projeto Spring Boot (Frontend Web)
+├── mysql-init/                                  # Scripts de inicialização do Banco MySQL
 ├── docker-compose.yml
-├── start.bat
-├── stop.bat
 ├── .env.example
 └── README.md
 ```
