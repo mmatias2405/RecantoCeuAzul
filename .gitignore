@@ -60,6 +60,9 @@ docker-compose*.env
 mysql_data/
 **/mysql_data/
 
+influxdb/
+**/influxdb/
+
 # Imagens criadas localmente (caso gere .tar com `docker save`)
 *.tar
 
