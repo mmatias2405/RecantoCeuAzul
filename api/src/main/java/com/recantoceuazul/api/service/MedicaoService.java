@@ -83,7 +83,7 @@ public class MedicaoService {
         for (FluxTable table : tables) {
             for (FluxRecord record : table.getRecords()) {
                 int residenciaId = Integer.parseInt((String)record.getValueByKey("residenciaId"));
-                Float totalLitros = ((Double) record.getValue()).floatValue();
+                Float totalLitros = ((Double) record.getValue()).floatValue()/1000;
                 Float leituraHidrante;
                 Optional<Medicao> ultimaMedicaoOpt = medicaoRepository
                 .findTopByResidenciaIdOrderByDataMedicaoDesc(residenciaId);
@@ -109,7 +109,7 @@ public class MedicaoService {
     }
     public float getMedicaoHoje(int residenciaId){
         Float medicaoHoje;
-        Float totalConsumo = influxDbService.getConsumoHoje(Integer.toString(residenciaId)).floatValue();
+        Float totalConsumo = influxDbService.getConsumoHoje(Integer.toString(residenciaId)).floatValue()/1000;
         Optional<Medicao> ultimaMedicaoOpt = medicaoRepository
         .findTopByResidenciaIdOrderByDataMedicaoDesc(residenciaId);
         if (ultimaMedicaoOpt.isPresent()) {
