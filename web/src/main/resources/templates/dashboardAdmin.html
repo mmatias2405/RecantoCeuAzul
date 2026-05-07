@@ -248,14 +248,14 @@ crossorigin="anonymous"
         
         dadosGerais.forEach(dadoGeral => {
             const cardHTML = `
-                <div style="min-width: 180px;"><div class="card text-center">
+                <div style="min-width: fit-content;"><div class="card text-center">
                         <div class="card-header gradient-card">
                             <strong class="text-white">${dadoGeral.mesAno}</strong>
                         </div>
                         <div class="card-body">
-                            <p class="card-text">Consumo Total: ${dadoGeral.consumoTotal} m<sup>3</sup></p>
+                            <p class="card-text">Consumo Total: ${dadoGeral.consumoTotal.toFixed(2)} m<sup>3</sup></p>
                             <p class="card-text">Medições realizadas: ${dadoGeral.medicoesRealizadas}</p>
-                            <p class="card-text">Média de Consumo: ${dadoGeral.mediaConsumo} m<sup>3</sup></p>
+                            <p class="card-text">Média de Consumo: ${dadoGeral.mediaConsumo.toFixed(2)} m<sup>3</sup></p>
                         </div>
                     </div>
                 </div>

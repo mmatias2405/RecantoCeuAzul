@@ -62,9 +62,24 @@
         </div>
     </div>
     <hr>
-    <h5 class="mb-0">Visualizando dados da residência número&nbsp;<span th:text="${residenciaNumero}"></span></h5>
+    <h5 class="mb-0">Visualizando dados da residência número&nbsp;<span th:text="${residenciaNumero}"></span></h5> 
+    <div class="hidrometro-card">
+        <h4 class="text-muted mb-1">Residência <span th:text="${residenciaNumero}">10</span></h4>
+        <h2 class="mb-4">Consumo do Mês</h2>
+        
+        <!-- O display em si. O valor do Thymeleaf carrega primeiro -->
+        <div class="display-digital">
+            <span id="valor-consumo" th:text="${#numbers.formatDecimal(consumoAtual, 1, 'COMMA', 2, 'POINT')}">0,00</span>
+            <span class="unidade">m³</span>
+        </div>
+
+        <p class="text-muted mt-3">
+            <span class="status-dot"></span> Monitoramento Ativo | Ultima Leitura: <span id="hora-consumo" th:text="${horaUltimaMedicao}">--:--</span>
+        </p>
+    </div>
     <div id="cards-container" class="d-flex my-2 overflow-x-auto gap-2">
     </div> 
+
     
 </div> 
 <hr>
@@ -107,6 +122,34 @@
     </div>
 </div>
 <script th:inline="javascript">
+    // Pega o ID da residência gerado pelo Thymeleaf
+        const idResidencia = /*[[${idResidencia}]]*/ 10;
+        const displayElement = document.getElementById('valor-consumo');
+        const horaElement = document.getElementById('hora-consumo');
+
+        // Função para buscar o dado atualizado do seu endpoint REST
+        async function atualizarHidrometro() {
+            try {
+                const response = await fetch(`/medicao/hoje/residencia/${idResidencia}`);
+                if (response.ok) {
+                    const dados = await response.json(); 
+                    
+                    // Formata o número (ex: 12.345 -> 12,35)
+                    const valorFormatado = parseFloat(dados.consumo).toLocaleString('pt-BR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                    
+                    displayElement.innerText = valorFormatado;
+                    horaElement.innerText = dados.hora;
+                }
+            } catch (error) {
+                console.error("Erro ao atualizar o hidrômetro:", error);
+            }
+        }
+
+        // Atualiza a cada 30 segundos (30000 ms) para não sobrecarregar o banco
+        setInterval(atualizarHidrometro, 30000);
     var medicoes = /*[[${medicoes}]]*/ [];
     var medias = /*[[${medias}]]*/ [];
     // ----- INÍCIO DO SCRIPT -----
