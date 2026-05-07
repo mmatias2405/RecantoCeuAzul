@@ -16,6 +16,7 @@ import com.recantoceuazul.api.model.*;
 import com.influxdb.query.FluxRecord;
 import com.influxdb.query.FluxTable;
 import com.recantoceuazul.api.dto.MedicaoRequest;
+import com.recantoceuazul.api.dto.MedicaoHojeResponse;
 
 @Service
 public class MedicaoService {
@@ -107,7 +108,7 @@ public class MedicaoService {
             }
         }
     }
-    public float getMedicaoHoje(int residenciaId){
+    public MedicaoHojeResponse getMedicaoHoje(int residenciaId){
         Float medicaoHoje;
         Float totalConsumo = influxDbService.getConsumoHoje(Integer.toString(residenciaId)).floatValue()/1000;
         Optional<Medicao> ultimaMedicaoOpt = medicaoRepository
@@ -119,6 +120,6 @@ public class MedicaoService {
         else{
             medicaoHoje = totalConsumo;
         }
-        return medicaoHoje;
+        return new MedicaoHojeResponse(medicaoHoje);
     }
 }

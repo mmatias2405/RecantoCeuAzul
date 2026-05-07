@@ -11,6 +11,7 @@ import com.recantoceuazul.api.dto.DadosGeraisProjection;
 // realizar operações de banco de dados e lidar com requisições HTTP.
 
 import com.recantoceuazul.api.dto.MedicaoRequest;
+import com.recantoceuazul.api.dto.MedicaoHojeResponse;
 import com.recantoceuazul.api.model.Medicao;
 import com.recantoceuazul.api.repository.MedicaoRepository;
 import com.recantoceuazul.api.service.MedicaoService;
@@ -61,7 +62,7 @@ public class MedicaoController {
     // GET -> Retorna a medição atual da residencia.
     // O ID da residência é passado como parâmetro na URL.
     @GetMapping("hoje/residencia/{id}")
-    public float buscarConsumoHoje(@PathVariable Integer id) {
+    public MedicaoHojeResponse buscarConsumoHoje(@PathVariable Integer id) {
         return medicaoService.getMedicaoHoje(id);
     }
     

@@ -2,6 +2,7 @@ package com.recantoceuazul.web.controller;
 
 import com.recantoceuazul.web.dto.*;
 import com.recantoceuazul.web.model.*;
+import com.recantoceuazul.web.dto.MedicaoHojeResponse;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -107,58 +108,102 @@ public class HomeController {
         return "redirect:/";
     }
     @GetMapping("/morador")
-    public String mostrarDashboardMorador(@RequestParam("residencia") Integer residenciaId, HttpSession session, Model model, RedirectAttributes redirectAttributes) {
-        Ator usuario = (Ator) session.getAttribute("usuarioLogado");
-        if (usuario == null) {
-            // Não está logado, redireciona para a home (login)
-            redirectAttributes.addFlashAttribute("mensagem", "Faça Login para acessar essa página!");
-            return "redirect:/";
+public String mostrarDashboardMorador(
+        @RequestParam(value = "residencia", required = false) Integer residenciaId, 
+        HttpSession session, 
+        Model model, 
+        RedirectAttributes redirectAttributes) {
+
+    // 1. Validação de Autenticação
+    Ator usuario = (Ator) session.getAttribute("usuarioLogado");
+    if (usuario == null) {
+        redirectAttributes.addFlashAttribute("mensagem", "Faça Login para acessar essa página!");
+        return "redirect:/";
+    }
+
+    // 2. Validação de Autorização e Papel
+    if (usuario.getPapel() == null) {
+        redirectAttributes.addFlashAttribute("mensagem", "O administrador do sistema ainda não autorizou seu acesso a plataforma, entre em contato com ele para normalizar a situação.");
+        return "redirect:/";
+    }
+    if (usuario.getPapel().equals("ADMIN") || usuario.getPapel().equals("FISCA")) {
+        return "redirect:/dashboard";
+    }
+
+    // 3. Preparação dos dados básicos
+    model.addAttribute("nomeUsuario", usuario.getNome());
+    
+    List<Residencia> listaDeResidencias = new ArrayList<>(usuario.getResidencias());
+    listaDeResidencias.sort(Comparator.comparing(Residencia::getNumero));
+    model.addAttribute("residencias", listaDeResidencias);
+
+    // 4. Lógica de Segurança (IDOR) - Garante que ele só veja a própria casa
+    boolean podeVerEssaResidencia = false;
+    int residenciaIdBusca = 0; // Inicializa com valor padrão
+
+    if (residenciaId != null) {
+        for (Residencia r : usuario.getResidencias()) {
+            // Use .equals() para comparar Objetos (Integer/Long) com segurança
+            if (r.getId() == residenciaId) {
+                podeVerEssaResidencia = true;
+                residenciaIdBusca = r.getId();
+                model.addAttribute("residenciaNumero", r.getNumero());
+                model.addAttribute("idResidencia", r.getId()); // Envia o ID para o JS do Frontend
+                break; // Achou a residência, pode parar o laço
+            }
         }
-        if(usuario.getPapel() == null){
-            redirectAttributes.addFlashAttribute("mensagem", "O administrador do sistema ainda não autorizou seu acesso a plataforma, entre em contato com ele para normalizar a situação");
-            return "redirect:/";
-        }
-        if (usuario.getPapel().equals("ADMIN") || usuario.getPapel().equals("FISCA")){
-            return "redirect:/dashboard";
-        }
-        // 3. Se chegou aqui, ele está logado!
-        model.addAttribute("nomeUsuario", usuario.getNome());
-        // 1. Converta o Set para um ArrayList
-        List<Residencia> listaDeResidencias = new ArrayList<>(usuario.getResidencias());
-        listaDeResidencias.sort(Comparator.comparing(Residencia::getNumero));
-        
-        model.addAttribute("residencias", listaDeResidencias);
-        
-        //Importante para garantir que o morador não consulte outras residencias através do URL
-        boolean podeVerEssaResidencia = false;
-        if(residenciaId != null){
-            for (Residencia r : usuario.getResidencias()){
-                if(r.getId() == residenciaId){
-                    podeVerEssaResidencia = true;
-                    model.addAttribute("residenciaNumero", r.getNumero());
-                }         
-            }      
-        }
-        int residenciaIdBusca;
-        if(podeVerEssaResidencia)
-        residenciaIdBusca = residenciaId;
-        else{
+    }
+
+    // Se ele não passou ID na URL ou tentou acessar um ID de outro morador (podeVerEssaResidencia = false)
+    if (!podeVerEssaResidencia) {
+        if (!usuario.getResidencias().isEmpty()) {
+            // Pega a primeira residência dele como padrão
             Residencia r = usuario.getResidencias().iterator().next();
             residenciaIdBusca = r.getId();
             model.addAttribute("residenciaNumero", r.getNumero());
-        }   
-        
-        
-        ResponseEntity<Medicao[]> responseMedicoes = restTemplate.getForEntity(API_URL + "/medicao/residencia/" + residenciaIdBusca, Medicao[].class);
-        List<Medicao>medicoes = Arrays.asList(responseMedicoes .getBody());
-        model.addAttribute("medicoes", medicoes);
-        
-        ResponseEntity<Media[]> responseMedias = restTemplate.getForEntity(API_URL + "/medicao/media", Media[].class);
-        List<Media>medias = Arrays.asList(responseMedias .getBody());
-        model.addAttribute("medias", medias);
-        
-        return "dashboardMorador"; // Retorna a página "dashboard.html" (por exemplo)
+            model.addAttribute("idResidencia", r.getId()); // Envia o ID para o JS do Frontend
+        } else {
+            // Caso extremo: usuário logado não tem nenhuma residência cadastrada
+            model.addAttribute("consumoAtual", 0.0);
+            return "dashboardMorador";
+        }
     }
+
+    // 5. Chamadas à API (agora ocorrem para TODOS os casos válidos)
+    try {
+        // Busca Consumo Atual
+        ResponseEntity<MedicaoHojeResponse> responseConsumoAtual = restTemplate.getForEntity(API_URL + "/medicao/hoje/residencia/" + residenciaIdBusca, MedicaoHojeResponse.class);
+        // Usa o .getBody() e verifica se não é nulo.
+        MedicaoHojeResponse medicaoHoje = responseConsumoAtual.getBody();
+        if (medicaoHoje != null) {
+            model.addAttribute("consumoAtual", medicaoHoje.getConsumo());
+            model.addAttribute("horaUltimaMedicao", medicaoHoje.getHora());
+        } else {
+            model.addAttribute("consumoAtual", 0.0);
+            model.addAttribute("horaUltimaMedicao", "--:--");
+        }
+
+        // Busca Histórico de Medições
+        ResponseEntity<Medicao[]> responseMedicoes = restTemplate.getForEntity(API_URL + "/medicao/residencia/" + residenciaIdBusca, Medicao[].class);
+        List<Medicao> medicoes = responseMedicoes.getBody() != null ? Arrays.asList(responseMedicoes.getBody()) : new ArrayList<>();
+        model.addAttribute("medicoes", medicoes);
+
+        // Busca Médias
+        ResponseEntity<Media[]> responseMedias = restTemplate.getForEntity(API_URL + "/medicao/media", Media[].class);
+        List<Media> medias = responseMedias.getBody() != null ? Arrays.asList(responseMedias.getBody()) : new ArrayList<>();
+        model.addAttribute("medias", medias);
+
+    } catch (Exception e) {
+        // Captura falhas de conexão com sua API (ex: API caiu) para não dar tela de erro (500) pro morador
+        System.err.println("Erro ao comunicar com a API REST: " + e.getMessage());
+        model.addAttribute("consumoAtual", 0.0);
+        model.addAttribute("horaUltimaMedicao", "--:--");
+        model.addAttribute("medicoes", new ArrayList<>());
+        model.addAttribute("medias", new ArrayList<>());
+    }
+
+    return "dashboardMorador";
+}
     
     @GetMapping("/dashboard")
     public String mostrarDashboard(HttpSession session, Model model, RedirectAttributes redirectAttributes) {       
@@ -429,6 +474,12 @@ public class HomeController {
         session.invalidate(); // Limpa/invalida a sessão
         redirectAttributes.addFlashAttribute("mensagem", "Você saiu do sistema.");
         return "redirect:/";
+    }
+
+    @GetMapping("/medicao/hoje/residencia/{id}")
+    @ResponseBody
+    public MedicaoHojeResponse buscarConsumoHoje(@PathVariable Integer id) {
+        return restTemplate.getForObject(API_URL + "/medicao/hoje/residencia/" + id, MedicaoHojeResponse.class);
     }
     
 }
