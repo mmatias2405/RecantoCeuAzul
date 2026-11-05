@@ -88,17 +88,20 @@ public class InfluxDbService {
     }
 
     /**
-     * Recupera as últimas leituras de demanda hídrica (volume_litros) agrupadas por residência
-     * para compor o vetor de features (Z_D_Med, Z_D_Max, Z_D_Std) do modelo preditivo.
+     * Recupera as últimas leituras diárias consolidadas de demanda hídrica (volume_litros) agrupadas por residência,
+     * agregando pacotes subdiários enviados pelo ESP32 (ex.: a cada 10s) para compor o vetor (Z_D_Med, Z_D_Max, Z_D_Std).
      */
     public Map<String, List<Double>> buscarUltimasLeiturasCondominio(int limitePorResidencia) {
         String bucketAlvo = (bucket != null && !bucket.isBlank()) ? bucket : "home";
         String query = String.format(
+            "import \"timezone\"\n" +
+            "option location = timezone.location(name: \"America/Sao_Paulo\")\n" +
             "from(bucket: \"%s\")\n" +
             "  |> range(start: -365d)\n" +
             "  |> filter(fn: (r) => r[\"_measurement\"] == \"consumo_agua\")\n" +
             "  |> filter(fn: (r) => r[\"_field\"] == \"volume_litros\")\n" +
             "  |> group(columns: [\"residenciaId\"])\n" +
+            "  |> aggregateWindow(every: 1d, fn: sum, createEmpty: false)\n" +
             "  |> sort(columns: [\"_time\"])\n" +
             "  |> tail(n: %d)",
             bucketAlvo,
@@ -125,16 +128,33 @@ public class InfluxDbService {
     }
 
     /**
-     * Recupera as últimas leituras temporais (timestamp + volume_litros) agrupadas por residência,
-     * permitindo tanto o cálculo das features do modelo quanto o rastreamento do momento inicial de anomalia.
+     * Recupera as últimas leituras diárias (preservando o primeiro timestamp real do dia + soma de volume_litros)
+     * agrupadas por residência, compatibilizando telemetria granular do ESP32 (pulsos de 10s) com o cálculo das features
+     * do modelo e o rastreamento do horário exato de início de anomalia.
      */
     public Map<String, List<LeituraTemporalDTO>> buscarUltimasLeiturasTemporaisCondominio(int limitePorResidencia) {
         String bucketAlvo = (bucket != null && !bucket.isBlank()) ? bucket : "home";
         String query = String.format(
+            "import \"timezone\"\n" +
+            "option location = timezone.location(name: \"America/Sao_Paulo\")\n" +
             "from(bucket: \"%s\")\n" +
             "  |> range(start: -365d)\n" +
             "  |> filter(fn: (r) => r[\"_measurement\"] == \"consumo_agua\")\n" +
             "  |> filter(fn: (r) => r[\"_field\"] == \"volume_litros\")\n" +
+            "  |> group(columns: [\"residenciaId\"])\n" +
+            "  |> window(every: 1d, createEmpty: false)\n" +
+            "  |> reduce(\n" +
+            "       identity: {volume_dia: 0.0, primeiro_ts: 0},\n" +
+            "       fn: (r, accumulator) => ({\n" +
+            "         volume_dia: accumulator.volume_dia + r._value,\n" +
+            "         primeiro_ts: if accumulator.primeiro_ts == 0 or int(v: r._time) < accumulator.primeiro_ts then int(v: r._time) else accumulator.primeiro_ts\n" +
+            "       })\n" +
+            "     )\n" +
+            "  |> map(fn: (r) => ({\n" +
+            "       residenciaId: r.residenciaId,\n" +
+            "       _time: time(v: r.primeiro_ts),\n" +
+            "       _value: r.volume_dia\n" +
+            "     }))\n" +
             "  |> group(columns: [\"residenciaId\"])\n" +
             "  |> sort(columns: [\"_time\"])\n" +
             "  |> tail(n: %d)",
