@@ -47,6 +47,24 @@ services:
       - recantonet
     restart: unless-stopped
 
+  ml-service:
+    build:
+      context: .
+      dockerfile: ml-service/Dockerfile
+    container_name: recanto-ml
+    ports:
+      - "${ML_PORT:-8000}:8000"
+    environment:
+      MODEL_PATH: /app/modelo_rf_recomendado_api.joblib
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - recantonet
+    restart: unless-stopped
+
   api:
     build:
       context: ./api
@@ -67,10 +85,13 @@ services:
       INFLUXDB_ORG: ${INFLUXDB_ORG} 
       INFLUXDB_BUCKET: ${INFLUXDB_BUCKET}  
       INFLUXDB_URL: http://influxdb:8086
+      ML_SERVICE_URL: http://ml-service:8000
     depends_on:
       db:
         condition: service_healthy
       influxdb:
+        condition: service_healthy
+      ml-service:
         condition: service_healthy
     networks:
       - recantonet

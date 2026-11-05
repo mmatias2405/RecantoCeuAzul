@@ -1,0 +1,13 @@
+.git
+.env
+mysql_data
+influxdb
+api
+web
+mysql-init
+influxdb-init
+*.log
+*.md
+prompt-tarefa.txt
+__pycache__
+*.pyc

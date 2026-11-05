@@ -80,3 +80,8 @@ dist/
 application-dev.properties
 prompt-tarefa.txt
 execucao-antigravity.log
+
+# --- Python / Machine Learning ---
+__pycache__/
+*.py[cod]
+.venv/
