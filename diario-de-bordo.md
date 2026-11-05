@@ -47,4 +47,40 @@ Projeto: **Sistema Inteligente de Gestão Hídrica e Detecção de Vazamentos �
   - Inspeção automatizada via script Python em ambiente isolado carregando `modelo_rf_recomendado_api.joblib` com `joblib.load()`, validando `type(rf)`, `n_features_in_`, `feature_names_in_`, `classes_`, `feature_importances_` e chamadas reais a `predict()` e `predict_proba()`.
   - Verificação de conectividade e inspeção do schema do InfluxDB ativo na porta `8086` (organização `docs`, bucket `home`) e dos scripts `influxdb-init/dummy-data.lp` e `mysql-init/init.sql`.
 - **Hash/Mensagem do Commit Associado**:
-  - Mensagem: `docs(diario): adiciona mapeamento arquitetural e inspecao do modelo joblib`
+  - `9a589ce` — `docs(diario): adiciona mapeamento arquitetural e inspecao do modelo joblib`
+
+---
+
+## Etapa 2 — Camada de Inferência do Modelo Preditivo (`.joblib`)
+
+- **Data/Hora e Etapa**: `2026-11-04 21:28 BRT` — Etapa 2: Construção do Microserviço Python (FastAPI) e CLI de Inferência para o Modelo `modelo_rf_recomendado_api.joblib`.
+- **Arquivos Criados/Modificados**:
+  - `ml-service/predictor.py` (criado)
+  - `ml-service/app.py` (criado)
+  - `ml-service/requirements.txt` (criado)
+  - `ml-service/Dockerfile` (criado)
+  - `modelo_rf_recomendado_api.joblib` (versionado na raiz do projeto)
+  - `docker-compose.yml` (modificado — inclusão do serviço `ml-service` e variável `ML_SERVICE_URL` no serviço `api`)
+  - `.dockerignore` (criado — isolamento do contexto de build do container Python)
+  - `.env.example` (modificado — inclusão de `ML_PORT=8000`)
+  - `.gitignore` (modificado — exclusão de `__pycache__/`, `*.py[cod]` e `.venv/`)
+- **Decisões de Arquitetura e Implementação**:
+  1. **Escolha Arquitetural (Opção A — Microserviço FastAPI + Suporte Híbrido CLI)**:
+     - Conforme as diretrizes do `GEMINI.md`, optou-se prioritariamente pela **Opção A (Microserviço REST em Python com FastAPI + Uvicorn)** integrado ao `docker-compose.yml` (`recanto-ml`, porta `8000`), mantendo o núcleo desacoplado em `ml-service/predictor.py` para permitir também execução direta via CLI (`ProcessBuilder` / linha de comando) caso necessário em ambiente de desenvolvimento local sem container.
+     - **Justificativa Técnica**: O artefato `modelo_rf_recomendado_api.joblib` possui ~4,56 MB (100 árvores de decisão profundas). Carregá-lo uma única vez em memória durante o ciclo `lifespan` do FastAPI elimina o *cold start* de importação do `scikit-learn`/`numpy` e desserialização do `.joblib` a cada requisição HTTP, reduzindo a latência de inferência de ~1s para menos de 5ms, além de manter a imagem JRE da API Spring Boot (`eclipse-temurin:17-jre-alpine`) enxuta e com responsabilidades bem segregadas.
+  2. **Contrato de Entrada e Saída (`POST /predict` e `GET /health`)**:
+     - **Entrada (`PredicaoVazamentoRequest`)**: Aceita em JSON tanto as features padronizadas pré-calculadas (`Z_D_Med`, `Z_D_Max`, `Z_D_Std`) quanto a série de leituras brutas de demanda hídrica em litros (`leiturasLitros`, mínimo de 3 amostras) acompanhada opcionalmente das estatísticas de referência (`referencia`: `mu_med`, `sd_med`, `mu_max`, `sd_max`, `mu_std`, `sd_std`), utilizando parâmetros calibrados do condomínio como *fallback* seguro e prevenindo divisão por zero (`_safe_zscore` limitado ao intervalo `[-5.0, 5.0]`).
+     - **Inferência**: Monta a matriz `numpy.float64` de dimensão `(1, 3)` respeitando estritamente a ordem declarada em `model.feature_names_in_` (`['Z_D_Med', 'Z_D_Max', 'Z_D_Std']`), executa `model.predict()` e `model.predict_proba()` extraindo a probabilidade exata da classe `1` (`positive_class_index`).
+     - **Saída Padronizada (`PredicaoVazamentoResponse`)**:
+       - `vazamentoDetectado` (`boolean`): `true` quando `classePredita == 1`.
+       - `classePredita` (`int`): `0` (normal) ou `1` (vazamento).
+       - `probabilidadeVazamento` (`float`): percentual de `0.0` a `100.0` calculado via `predict_proba`.
+       - `nivelRisco` (`string`): `"Baixo"` (`< 40%`), `"Moderado"` (`40%` a `69,99%` ou classificação positiva limítrofe) e `"Alto"` (`>= 70%`).
+       - `featuresUtilizadas` (`map`): valores exatos de `Z_D_Med`, `Z_D_Max` e `Z_D_Std` submetidos ao modelo para rastreabilidade.
+  3. **Orquestração Docker**:
+     - Adicionado o serviço `ml-service` na rede `recantonet` com *healthcheck* nativo em Python (`urllib.request` em `http://localhost:8000/health`), sem depender de pacotes extras como `curl` na imagem `python:3.12-slim`. O serviço `api` recebeu `ML_SERVICE_URL: http://ml-service:8000` e dependência `service_healthy`.
+- **Validação/Testes Realizados**:
+  - Execução isolada via CLI (`predictor.py --json`) testando perfis simulados de Rede Normal (`probabilidadeVazamento: 0.0%`, `nivelRisco: "Baixo"`), Risco Moderado (`probabilidadeVazamento: 69.49%`, `nivelRisco: "Moderado"`) e Risco Alto (`probabilidadeVazamento: 100.0%`, `nivelRisco: "Alto"`).
+  - Testes automatizados dos endpoints HTTP FastAPI via `TestClient` validando `GET /health` (`200 OK`), `POST /predict` com série normal (`3.83%`, `Baixo`), `POST /predict` com pico anômalo de vazamento (`95.05%`, `Alto`) e tratamento de dados insuficientes (`422 Unprocessable Entity`).
+- **Hash/Mensagem do Commit Associado**:
+  - `e22698b` — `feat(ml): adiciona microservico fastapi e cli de inferencia para o modelo joblib`
