@@ -40,6 +40,8 @@ class HomeControllerVazamentoViewTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Diagnóstico da Rede Hidráulica / Detecção de Vazamentos")))
                 .andExpect(content().string(containsString("id=\"card-diagnostico-vazamento\"")))
+                .andExpect(content().string(containsString("id=\"diagnostico-inicio-indicio\"")))
+                .andExpect(content().string(containsString("id=\"filtro-anos-tabs\"")))
                 .andExpect(content().string(containsString("Orientação ao Morador:")));
     }
 }

@@ -11,6 +11,7 @@ public class AnaliseVazamentoResponse {
     private String status;
     private Double probabilidadeVazamento;
     private String nivelRisco;
+    private String inicioIndicioVazamento;
     private String mensagemOrientativa;
     private Integer quantidadeLeituras;
     private Double demandaMediaLitros;
@@ -87,6 +88,14 @@ public class AnaliseVazamentoResponse {
 
     public void setNivelRisco(String nivelRisco) {
         this.nivelRisco = nivelRisco;
+    }
+
+    public String getInicioIndicioVazamento() {
+        return inicioIndicioVazamento;
+    }
+
+    public void setInicioIndicioVazamento(String inicioIndicioVazamento) {
+        this.inicioIndicioVazamento = inicioIndicioVazamento;
     }
 
     public String getMensagemOrientativa() {

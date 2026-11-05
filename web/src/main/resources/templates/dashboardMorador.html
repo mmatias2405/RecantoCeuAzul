@@ -7,206 +7,279 @@
     <!-- Required meta tags -->
     <meta charset="utf-8" />
     <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+        name="viewport"
+        content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
-    
-    <!-- Bootstrap CSS v5.2.1 -->
+
+    <!-- Bootstrap CSS v5.3.2 -->
     <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-    integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
-    crossorigin="anonymous"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+        crossorigin="anonymous"
     />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
-<body>
+<body class="morador-bg">
     <header>
-        <nav class="navbar navbar-expand-md navbar-dark bg-body-tertiary gradient-custom">
-            <div class="container-fluid">
-                                <a class="navbar-brand" href="/morador?residencia=0">Residencial Recanto do Céu Azul</a>
+        <nav class="navbar navbar-expand-md navbar-dark bg-body-tertiary gradient-custom shadow-sm">
+            <div class="container-fluid px-3 px-lg-4">
+                <a class="navbar-brand fw-semibold" href="/morador?residencia=0">Residencial Recanto do Céu Azul</a>
                 <div class="d-flex">
                     <ul class="navbar-nav">
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle text-white" href="#" id="navbarDarkDropdownMenuLink" role="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            Bem Vindo(a)!&nbsp;<span th:text=" ${nomeUsuario}"> </span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-md-end"
-                        aria-labelledby="navbarDarkDropdownMenuLink">
-                        <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                Bem-vindo(a),&nbsp;<span th:text="${nomeUsuario}"></span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-md-end"
+                                aria-labelledby="navbarDarkDropdownMenuLink">
+                                <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                            </ul>
+                        </li>
                     </ul>
-                </li>
-            </ul>
-        </div>
-
+                </div>
+            </div>
         </nav>
     </header>
-    <div class="container-fluid">
-        
-        <div class="row my-4 align-items-center">
-            <div class="col col-md-auto"> 
-                <h5 class="mb-0">Selecione a residência que deseja visualizar</h5>
+
+    <div class="container-xxl py-4 px-3 px-lg-4">
+
+        <!-- Barra Superior: Seleção de Residência -->
+        <div class="morador-toolbar d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <div>
+                <span class="text-uppercase text-muted small fw-semibold d-block">Painel de Monitoramento Hídrico</span>
+                <h4 class="mb-0 fw-bold">
+                    Residência Nº&nbsp;<span class="text-primary" th:text="${residenciaNumero}">101</span>
+                </h4>
             </div>
-            <div class="col-auto">
-                <form action="/morador" method="get">
-                    <select class="form-select" aria-label="Default select example" name="residencia" id="residencia">
-                        <option th:each="s : ${residencias}" 
-                        th:value="${s.id}" 
-                        th:selected="${s.id == idResidencia}"
-                        th:text="${s.numero}">
+
+            <form action="/morador" method="get" class="d-flex flex-wrap align-items-center gap-2">
+                <label for="residencia" class="form-label mb-0 text-muted small fw-semibold">Unidade:</label>
+                <select class="form-select form-select-sm" style="min-width: 150px;"
+                        aria-label="Selecionar residência" name="residencia" id="residencia"
+                        onchange="this.form.submit()">
+                    <option th:each="s : ${residencias}"
+                            th:value="${s.id}"
+                            th:selected="${s.id == idResidencia}"
+                            th:text="'Residência ' + ${s.numero}">
                     </option>
                 </select>
-                <button type="submit" class="btn btn-primary mt-1">Pesquisar</button>
+                <button type="submit" class="btn btn-primary btn-sm">Pesquisar</button>
             </form>
         </div>
-    </div>
-    <hr>
-    <h5 class="mb-0">Visualizando dados da residência número&nbsp;<span th:text="${residenciaNumero}"></span></h5> 
-    <div class="hidrometro-card">
-        <h4 class="text-muted mb-1">Residência <span th:text="${residenciaNumero}">10</span></h4>
-        <h2 class="mb-4">Consumo do Mês</h2>
-        
-        <!-- O display em si. O valor do Thymeleaf carrega primeiro -->
-        <div class="display-digital">
-            <span id="valor-consumo" th:text="${#numbers.formatDecimal(consumoAtual, 1, 'COMMA', 4, 'POINT')}">0,0000</span>
-            <span class="unidade">m³</span>
-        </div>
 
-        <p class="text-muted mt-3">
-            <span class="status-dot"></span> Monitoramento Ativo | Ultima Leitura: <span id="hora-consumo" th:text="${horaUltimaMedicao}">--:--</span>
-        </p>
-    </div>
+        <!-- Seção Principal: Hidrômetro em Tempo Real + Diagnóstico Preditivo de Vazamentos -->
+        <div class="row g-4 align-items-stretch mb-4">
+            <!-- Coluna 1: Hidrômetro Digital -->
+            <div class="col-lg-5 d-flex">
+                <div class="hidrometro-card hidrometro-card-modern d-flex flex-column justify-content-center">
+                    <span class="text-uppercase text-muted small fw-semibold">Leitura Atual em Tempo Real</span>
+                    <h3 class="fw-bold mt-1 mb-3">Hidrômetro Digital</h3>
 
-    <!-- Card: Diagnóstico da Rede Hidráulica / Detecção de Vazamentos -->
-    <div id="card-diagnostico-vazamento"
-         class="diagnostico-vazamento-card"
-         th:classappend="${analiseVazamento == null or !analiseVazamento.analiseDisponivel} ? 'diagnostico-indisponivel' : (${analiseVazamento.vazamentoDetectado and analiseVazamento.nivelRisco == 'Alto'} ? 'diagnostico-alerta' : (${analiseVazamento.vazamentoDetectado or analiseVazamento.nivelRisco == 'Moderado'} ? 'diagnostico-moderado' : 'diagnostico-normal'))">
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-            <div>
-                <h5 class="mb-0 fw-bold">Diagnóstico da Rede Hidráulica / Detecção de Vazamentos</h5>
-                <small class="text-muted">Análise preditiva baseada no perfil recente de demanda hídrica</small>
-            </div>
-            <button type="button" id="btn-atualizar-diagnostico" class="btn btn-outline-primary btn-sm">
-                Atualizar Diagnóstico
-            </button>
-        </div>
+                    <div class="display-digital my-2">
+                        <span id="valor-consumo" th:text="${#numbers.formatDecimal(consumoAtual, 1, 'COMMA', 4, 'POINT')}">0,0000</span>
+                        <span class="unidade">m³</span>
+                    </div>
 
-        <div class="row align-items-center g-3 my-1">
-            <div class="col-md-7">
-                <div class="small text-uppercase text-muted fw-semibold mb-1">Status Atual da Rede</div>
-                <div class="d-flex flex-wrap align-items-center gap-2">
-                    <span id="diagnostico-status"
-                          class="fs-5 fw-bold"
-                          th:classappend="${analiseVazamento == null or !analiseVazamento.analiseDisponivel} ? 'text-secondary' : (${analiseVazamento.vazamentoDetectado and analiseVazamento.nivelRisco == 'Alto'} ? 'text-danger' : (${analiseVazamento.vazamentoDetectado or analiseVazamento.nivelRisco == 'Moderado'} ? 'text-warning' : 'text-success'))"
-                          th:text="${analiseVazamento != null ? analiseVazamento.status : 'Dados insuficientes para análise'}">
-                        Rede Normal
-                    </span>
-                    <span id="diagnostico-risco-badge"
-                          class="badge rounded-pill"
-                          th:classappend="${analiseVazamento == null or !analiseVazamento.analiseDisponivel} ? 'text-bg-secondary' : (${analiseVazamento.vazamentoDetectado and analiseVazamento.nivelRisco == 'Alto'} ? 'text-bg-danger' : (${analiseVazamento.vazamentoDetectado or analiseVazamento.nivelRisco == 'Moderado'} ? 'text-bg-warning' : 'text-bg-success'))"
-                          th:text="${analiseVazamento != null and analiseVazamento.analiseDisponivel ? 'Risco ' + analiseVazamento.nivelRisco : 'Aguardando Leituras'}">
-                        Risco Baixo
-                    </span>
+                    <p class="text-muted mt-3 mb-0">
+                        <span class="status-dot"></span> Monitoramento Ativo | Última leitura:
+                        <strong id="hora-consumo" th:text="${horaUltimaMedicao}">--:--</strong>
+                    </p>
                 </div>
             </div>
 
-            <div class="col-md-5 text-md-end">
-                <div class="small text-uppercase text-muted fw-semibold mb-1">Probabilidade Estimada de Vazamento</div>
-                <div id="diagnostico-probabilidade"
-                     class="diagnostico-prob-valor"
-                     th:classappend="${analiseVazamento == null or !analiseVazamento.analiseDisponivel} ? 'text-secondary' : (${analiseVazamento.vazamentoDetectado and analiseVazamento.nivelRisco == 'Alto'} ? 'text-danger' : (${analiseVazamento.vazamentoDetectado or analiseVazamento.nivelRisco == 'Moderado'} ? 'text-warning' : 'text-success'))"
-                     th:text="${analiseVazamento != null and analiseVazamento.analiseDisponivel ? #numbers.formatDecimal(analiseVazamento.probabilidadeVazamento, 1, 'POINT', 2, 'COMMA') + '%' : '--%'}">
-                    0,00%
-                </div>
-                <div class="progress mt-2" style="height: 8px;" role="progressbar" aria-label="Probabilidade de vazamento">
-                    <div id="diagnostico-progress-bar"
-                         class="progress-bar"
-                         th:classappend="${analiseVazamento == null or !analiseVazamento.analiseDisponivel} ? 'bg-secondary' : (${analiseVazamento.vazamentoDetectado and analiseVazamento.nivelRisco == 'Alto'} ? 'bg-danger' : (${analiseVazamento.vazamentoDetectado or analiseVazamento.nivelRisco == 'Moderado'} ? 'bg-warning' : 'bg-success'))"
-                         th:style="'width: ' + (${analiseVazamento != null and analiseVazamento.analiseDisponivel ? analiseVazamento.probabilidadeVazamento : 0}) + '%'">
+            <!-- Coluna 2: Diagnóstico da Rede Hidráulica / Detecção de Vazamentos -->
+            <div class="col-lg-7 d-flex">
+                <div id="card-diagnostico-vazamento"
+                     class="diagnostico-vazamento-card d-flex flex-column justify-content-between"
+                     th:classappend="${analiseVazamento == null or !analiseVazamento.analiseDisponivel} ? 'diagnostico-indisponivel' : (${analiseVazamento.vazamentoDetectado and analiseVazamento.nivelRisco == 'Alto'} ? 'diagnostico-alerta' : (${analiseVazamento.vazamentoDetectado or analiseVazamento.nivelRisco == 'Moderado'} ? 'diagnostico-moderado' : 'diagnostico-normal'))">
+
+                    <div>
+                        <div class="d-flex flex-wrap justify-content-between align-items-start mb-3 gap-2">
+                            <div>
+                                <h5 class="mb-0 fw-bold">Diagnóstico da Rede Hidráulica / Detecção de Vazamentos</h5>
+                                <small class="text-muted">Análise preditiva baseada no perfil recente de demanda hídrica</small>
+                            </div>
+                            <button type="button" id="btn-atualizar-diagnostico" class="btn btn-outline-primary btn-sm">
+                                Atualizar Diagnóstico
+                            </button>
+                        </div>
+
+                        <div class="row align-items-stretch g-3 my-1">
+                            <!-- Status Atual -->
+                            <div class="col-md-6 d-flex flex-column justify-content-center">
+                                <div class="small text-uppercase text-muted fw-semibold mb-1">Status Atual da Rede</div>
+                                <div class="d-flex flex-wrap align-items-center gap-2">
+                                    <span id="diagnostico-status"
+                                          class="fs-5 fw-bold"
+                                          th:classappend="${analiseVazamento == null or !analiseVazamento.analiseDisponivel} ? 'text-secondary' : (${analiseVazamento.vazamentoDetectado and analiseVazamento.nivelRisco == 'Alto'} ? 'text-danger' : (${analiseVazamento.vazamentoDetectado or analiseVazamento.nivelRisco == 'Moderado'} ? 'text-warning' : 'text-success'))"
+                                          th:text="${analiseVazamento != null ? analiseVazamento.status : 'Dados insuficientes para análise'}">
+                                        Rede Normal
+                                    </span>
+                                    <span id="diagnostico-risco-badge"
+                                          class="badge rounded-pill"
+                                          th:classappend="${analiseVazamento == null or !analiseVazamento.analiseDisponivel} ? 'text-bg-secondary' : (${analiseVazamento.vazamentoDetectado and analiseVazamento.nivelRisco == 'Alto'} ? 'text-bg-danger' : (${analiseVazamento.vazamentoDetectado or analiseVazamento.nivelRisco == 'Moderado'} ? 'text-bg-warning' : 'text-bg-success'))"
+                                          th:text="${analiseVazamento != null and analiseVazamento.analiseDisponivel ? 'Risco ' + analiseVazamento.nivelRisco : 'Aguardando Leituras'}">
+                                        Risco Baixo
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Bloco de Probabilidade + Momento Inicial de Indício de Vazamento -->
+                            <div class="col-md-6">
+                                <div class="diagnostico-prob-box text-md-end h-100 d-flex flex-column justify-content-center">
+                                    <div class="small text-uppercase text-muted fw-semibold mb-1">Probabilidade Estimada de Vazamento</div>
+                                    <div id="diagnostico-probabilidade"
+                                         class="diagnostico-prob-valor"
+                                         th:classappend="${analiseVazamento == null or !analiseVazamento.analiseDisponivel} ? 'text-secondary' : (${analiseVazamento.vazamentoDetectado and analiseVazamento.nivelRisco == 'Alto'} ? 'text-danger' : (${analiseVazamento.vazamentoDetectado or analiseVazamento.nivelRisco == 'Moderado'} ? 'text-warning' : 'text-success'))"
+                                         th:text="${analiseVazamento != null and analiseVazamento.analiseDisponivel ? #numbers.formatDecimal(analiseVazamento.probabilidadeVazamento, 1, 'POINT', 2, 'COMMA') + '%' : '--%'}">
+                                        0,00%
+                                    </div>
+                                    <div class="progress mt-2" style="height: 8px;" role="progressbar" aria-label="Probabilidade de vazamento">
+                                        <div id="diagnostico-progress-bar"
+                                             class="progress-bar"
+                                             th:classappend="${analiseVazamento == null or !analiseVazamento.analiseDisponivel} ? 'bg-secondary' : (${analiseVazamento.vazamentoDetectado and analiseVazamento.nivelRisco == 'Alto'} ? 'bg-danger' : (${analiseVazamento.vazamentoDetectado or analiseVazamento.nivelRisco == 'Moderado'} ? 'bg-warning' : 'bg-success'))"
+                                             th:style="'width: ' + (${analiseVazamento != null and analiseVazamento.analiseDisponivel ? analiseVazamento.probabilidadeVazamento : 0}) + '%'">
+                                        </div>
+                                    </div>
+
+                                    <!-- Indicação do momento em que as leituras começam a apontar possível vazamento -->
+                                    <div class="d-flex justify-content-md-end">
+                                        <div id="diagnostico-inicio-indicio"
+                                             class="diagnostico-inicio-pill"
+                                             th:classappend="${analiseVazamento == null or !analiseVazamento.analiseDisponivel} ? 'inicio-neutro' : (${analiseVazamento.inicioIndicioVazamento != null and analiseVazamento.nivelRisco == 'Alto'} ? 'inicio-alerta' : (${analiseVazamento.inicioIndicioVazamento != null} ? 'inicio-moderado' : 'inicio-normal'))"
+                                             th:text="${analiseVazamento == null or !analiseVazamento.analiseDisponivel ? 'Aguardando leituras para rastreamento' : (analiseVazamento.inicioIndicioVazamento != null ? 'Indício nas leituras desde: ' + analiseVazamento.inicioIndicioVazamento : 'Sem indício de vazamento nas leituras recentes')}">
+                                            Sem indício de vazamento nas leituras recentes
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="diagnostico-orientacao-box mt-3">
+                            <strong class="d-block mb-1">Orientação ao Morador:</strong>
+                            <p id="diagnostico-mensagem" class="mb-0 text-body"
+                               th:text="${analiseVazamento != null ? analiseVazamento.mensagemOrientativa : 'O monitoramento automático será ativado assim que houver leituras disponíveis.'}">
+                                O perfil de consumo da sua residência está dentro da normalidade esperada.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap justify-content-between text-muted small mt-3 pt-2 border-top gap-2">
+                        <span>Leituras recentes avaliadas: <strong id="diagnostico-leituras" th:text="${analiseVazamento != null and analiseVazamento.quantidadeLeituras != null ? analiseVazamento.quantidadeLeituras : 0}">0</strong></span>
+                        <span>Última verificação: <span id="diagnostico-hora" th:text="${analiseVazamento != null and analiseVazamento.dataHoraAnalise != null ? analiseVazamento.dataHoraAnalise : '--:--'}">--:--</span></span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="diagnostico-orientacao-box mt-3">
-            <strong class="d-block mb-1">Orientação ao Morador:</strong>
-            <p id="diagnostico-mensagem" class="mb-0 text-body"
-               th:text="${analiseVazamento != null ? analiseVazamento.mensagemOrientativa : 'O monitoramento automático será ativado assim que houver leituras disponíveis.'}">
-                O perfil de consumo da sua residência está dentro da normalidade esperada.
-            </p>
-        </div>
+        <!-- Seção de Histórico Consolidado Organizado por Ano -->
+        <div class="historico-section-card mb-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3 pb-3 border-bottom">
+                <div>
+                    <h5 class="mb-0 fw-bold">Histórico de Consumo Consolidado</h5>
+                    <small class="text-muted">Acompanhe os fechamentos mensais e compare o consumo da residência por ano</small>
+                </div>
 
-        <div class="d-flex flex-wrap justify-content-between text-muted small mt-2 gap-2">
-            <span>Leituras recentes avaliadas: <strong id="diagnostico-leituras" th:text="${analiseVazamento != null and analiseVazamento.quantidadeLeituras != null ? analiseVazamento.quantidadeLeituras : 0}">0</strong></span>
-            <span>Última verificação: <span id="diagnostico-hora" th:text="${analiseVazamento != null and analiseVazamento.dataHoraAnalise != null ? analiseVazamento.dataHoraAnalise : '--:--'}">--:--</span></span>
-        </div>
-    </div>
-
-    <div id="cards-container" class="d-flex my-2 overflow-x-auto gap-2">
-    </div> 
-
-    
-</div> 
-<hr>
-<div class="mt-2" style="width: 100%; max-width: 900px; margin: 40px auto 0;">
-    <h5 class="mb-2">Histórico de consumo:</h5>
-    <canvas id="meuGrafico"></canvas>
-</div>
-<!-- Modal -->
-<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="staticBackdropLabel">Detalhes da Medição</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">
-                        <strong>Marcação no Hidrômetro:</strong>
-                        <span id="modal-volume"></span>
-                    </li>
-                    <li class="list-group-item">
-                        <strong>Consumo (Delta):</strong>
-                        <span id="modal-consumo"></span>
-                    </li>
-                    <li class="list-group-item">
-                        <strong>Data da Leitura:</strong>
-                        <span id="modal-data"></span>
-                    </li>
-                    <li class="list-group-item">
-                        <strong>Responsável pela Leitura:</strong>
-                        <span id="modal-ator"></span>
-                    </li>
+                <!-- Abas / Pílulas de Filtro por Ano -->
+                <ul class="nav nav-pills gap-1" id="filtro-anos-tabs" role="tablist" aria-label="Filtro por ano">
                 </ul>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+
+            <!-- Indicadores-Resumo do Período Selecionado -->
+            <div class="row g-3 mb-4" id="resumo-ano-container">
+                <div class="col-md-4">
+                    <div class="resumo-ano-kpi">
+                        <span class="small text-uppercase text-muted fw-semibold d-block">Consumo Total no Período</span>
+                        <div class="fs-4 fw-bold text-primary mt-1" id="kpi-total-periodo">0,0000 m³</div>
+                        <small class="text-muted" id="kpi-qtd-meses">0 meses consolidados</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="resumo-ano-kpi">
+                        <span class="small text-uppercase text-muted fw-semibold d-block">Média Mensal da Residência</span>
+                        <div class="fs-4 fw-bold mt-1" id="kpi-media-residencia">0,0000 m³</div>
+                        <small class="text-muted">Média do condomínio: <strong id="kpi-media-condominio">0,0000 m³</strong></small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="resumo-ano-kpi">
+                        <span class="small text-uppercase text-muted fw-semibold d-block">Eficiência frente ao Condomínio</span>
+                        <div class="fs-4 fw-bold text-success mt-1" id="kpi-meses-eficientes">0 / 0 meses</div>
+                        <small class="text-muted">Meses com consumo igual ou abaixo da média</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico de Evolução Sincronizado com o Ano Selecionado -->
+            <div class="mb-4 p-3 rounded-3 border bg-white">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0 fw-bold">Evolução Mensal (<span id="titulo-ano-grafico">Todos</span>)</h6>
+                    <small class="text-muted">Linha contínua: Residência | Linha tracejada: Média do Condomínio</small>
+                </div>
+                <div style="position: relative; width: 100%; max-height: 320px;">
+                    <canvas id="meuGrafico"></canvas>
+                </div>
+            </div>
+
+            <!-- Grade de Cards Mensais Organizada por Ano -->
+            <div id="cards-container">
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal Detalhes da Medição -->
+    <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">Detalhes da Medição</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <strong>Marcação no Hidrômetro:</strong>
+                            <span id="modal-volume"></span>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Consumo (Delta):</strong>
+                            <span id="modal-consumo"></span>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Data da Leitura:</strong>
+                            <span id="modal-data"></span>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Responsável pela Leitura:</strong>
+                            <span id="modal-ator"></span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
-<script th:inline="javascript">
-    // Pega o ID da residência gerado pelo Thymeleaf
+
+    <script th:inline="javascript">
         const idResidencia = /*[[${idResidencia}]]*/ 10;
         const displayElement = document.getElementById('valor-consumo');
         const horaElement = document.getElementById('hora-consumo');
 
-        // Função para buscar o dado atualizado do seu endpoint REST
         async function atualizarHidrometro() {
             try {
                 const response = await fetch(`/medicao/hoje/residencia/${idResidencia}`);
                 if (response.ok) {
-                    const dados = await response.json(); 
-                    
-                    // Formata o número (ex: 12.3456 -> 12,3456)
+                    const dados = await response.json();
                     const valorFormatado = parseFloat(dados.consumo).toLocaleString('pt-BR', {
                         minimumFractionDigits: 4,
                         maximumFractionDigits: 4
                     });
-                    
                     displayElement.innerText = valorFormatado;
                     horaElement.innerText = dados.hora;
                 }
@@ -215,7 +288,6 @@
             }
         }
 
-        // Atualiza a cada 30 segundos (30000 ms) para não sobrecarregar o banco
         setInterval(atualizarHidrometro, 30000);
 
         const analiseInicial = /*[[${analiseVazamento}]]*/ null;
@@ -228,6 +300,7 @@
             const badgeEl = document.getElementById('diagnostico-risco-badge');
             const probEl = document.getElementById('diagnostico-probabilidade');
             const barEl = document.getElementById('diagnostico-progress-bar');
+            const inicioEl = document.getElementById('diagnostico-inicio-indicio');
             const msgEl = document.getElementById('diagnostico-mensagem');
             const leiturasEl = document.getElementById('diagnostico-leituras');
             const horaEl = document.getElementById('diagnostico-hora');
@@ -236,11 +309,13 @@
             const vazamento = Boolean(dados.vazamentoDetectado);
             const risco = dados.nivelRisco || 'Indisponível';
             const probNum = Number(dados.probabilidadeVazamento || 0);
+            const inicioIndicio = dados.inicioIndicioVazamento || null;
 
             let cardClasse = 'diagnostico-indisponivel';
             let textoClasse = 'text-secondary';
             let badgeClasse = 'text-bg-secondary';
             let barraClasse = 'bg-secondary';
+            let inicioClasse = 'inicio-neutro';
 
             if (disponivel) {
                 if (vazamento && risco.toLowerCase() === 'alto') {
@@ -248,20 +323,23 @@
                     textoClasse = 'text-danger';
                     badgeClasse = 'text-bg-danger';
                     barraClasse = 'bg-danger';
+                    inicioClasse = 'inicio-alerta';
                 } else if (vazamento || risco.toLowerCase() === 'moderado') {
                     cardClasse = 'diagnostico-moderado';
                     textoClasse = 'text-warning';
                     badgeClasse = 'text-bg-warning';
                     barraClasse = 'bg-warning';
+                    inicioClasse = 'inicio-moderado';
                 } else {
                     cardClasse = 'diagnostico-normal';
                     textoClasse = 'text-success';
                     badgeClasse = 'text-bg-success';
                     barraClasse = 'bg-success';
+                    inicioClasse = 'inicio-normal';
                 }
             }
 
-            cardEl.className = `diagnostico-vazamento-card ${cardClasse}`;
+            cardEl.className = `diagnostico-vazamento-card d-flex flex-column justify-content-between ${cardClasse}`;
             statusEl.className = `fs-5 fw-bold ${textoClasse}`;
             statusEl.innerText = dados.status || 'Dados insuficientes para análise';
 
@@ -275,6 +353,17 @@
 
             barEl.className = `progress-bar ${barraClasse}`;
             barEl.style.width = `${disponivel ? Math.min(100, Math.max(0, probNum)) : 0}%`;
+
+            if (inicioEl) {
+                inicioEl.className = `diagnostico-inicio-pill ${inicioClasse}`;
+                if (!disponivel) {
+                    inicioEl.innerText = 'Aguardando leituras para rastreamento';
+                } else if (inicioIndicio) {
+                    inicioEl.innerText = `Indício nas leituras desde: ${inicioIndicio}`;
+                } else {
+                    inicioEl.innerText = 'Sem indício de vazamento nas leituras recentes';
+                }
+            }
 
             msgEl.innerText = dados.mensagemOrientativa || '';
             leiturasEl.innerText = dados.quantidadeLeituras != null ? dados.quantidadeLeituras : 0;
@@ -307,192 +396,294 @@
         }
 
         setInterval(atualizarDiagnosticoVazamento, 30000);
-    var medicoes = /*[[${medicoes}]]*/ [];
-    var medias = /*[[${medias}]]*/ [];
-    // ----- INÍCIO DO SCRIPT -----
-    
-    // Espera o DOM estar pronto para executar o script
-    document.addEventListener("DOMContentLoaded", function() {
-        
-        // +++ 1. Criar um "mapa de lookup" para as médias +++
-        //    Isso transforma o array 'medias' em um objeto para consulta rápida.
-        //    Ex: { "05/2025": 12.39, "06/2025": 13.01, ... }
-        const mediaLookup = medias.reduce((acc, media) => {
-            acc[media.mesAno] = media.mediaConsumo;
-            return acc;
-        }, {});
-        
-        // 2. Seleciona o container onde os cards serão inseridos
-        const container = document.getElementById('cards-container');
-        
-        // 3. Limpa o container caso já tenha algo (boa prática)
-        container.innerHTML = '';
-        
-        // 4. Itera sobre cada 'medicao' no seu array
-        medicoes.forEach(medicao => {
-            
-            // 5. Lógica para formatar a data (MM/YYYY)
-            const data = new Date(medicao.dataMedicao);
-            const mes = String(data.getMonth() + 1).padStart(2, '0'); // getMonth() é 0-11, por isso +1
-            const ano = data.getFullYear();
-            const dataHeader = `${mes}/${ano}`; // Este é o formato "MM/YYYY"
-            
-            // +++ 6. Buscar a média específica para este mês usando o 'mediaLookup' +++
-            //    Se não encontrar (||), usamos 0 como padrão.
-            const mediaDoMes = mediaLookup[dataHeader] || 0;
-            
-            // +++ 7. Lógica para a classe do consumo (verde ou vermelho) usando a mediaDoMes +++
-            const classeConsumo = medicao.delta > mediaDoMes ? 'text-danger' : 'text-success';
-            
-            // 8. Cria o HTML do card usando Template Literals (crases ``)
-            //    Adicionamos 'data-id' ao botão para saber qual medição buscar depois
-            const cardHTML = `
-        <div style="min-width: 180px;" class="m-2"> <div class="card text-center">
-                <div class="card-header gradient-card">
-                    <strong class="text-white">${dataHeader}</strong>
-                </div>
-                <div class="card-body">
-                    <p class="card-text">Consumo: <span class="${classeConsumo}">${medicao.delta.toFixed(4)} m<sup>3</sup></span></p>
 
-                    <p class="card-text">Média: ${mediaDoMes.toFixed(4)} m<sup>3</sup></p>
+        var medicoes = /*[[${medicoes}]]*/ [];
+        var medias = /*[[${medias}]]*/ [];
 
-                    <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#staticBackdrop" data-id="${medicao.id}">
-                        Ver Detalhe
-                    </a>
-                </div>
-            </div>
-        </div>
-        `;
-            
-            // 10. Insere o card gerado dentro do container
-            container.innerHTML += cardHTML;
-        });
-        
-        // ----- LÓGICA DO MODAL -----
-        // (Nenhuma alteração necessária no modal, pois ele só mostra os dados da 'medicao')
-        
-        // 9. Seleciona o próprio modal
-        const modalElement = document.getElementById('staticBackdrop');
-        
-        // 10. Seleciona os campos de texto dentro do modal
-        const modalVolume = document.getElementById('modal-volume');
-        const modalConsumo = document.getElementById('modal-consumo');
-        const modalData = document.getElementById('modal-data');
-        const modalAtor = document.getElementById('modal-ator');
-        const modalTitulo = document.getElementById('staticBackdropLabel');
-        
-        // 11. Adiciona um "escutador" de evento ao modal.
-        //     Isso é disparado TODA VEZ que o modal está prestes a ser aberto.
-        modalElement.addEventListener('show.bs.modal', function (event) {
-            
-            // 12. Pega o botão que acionou o modal (o 'Ver Detalhe' que foi clicado)
-            const button = event.relatedTarget;
-            
-            // 13. Pega o 'data-id' que armazenamos no botão
-            const medicaoId = parseInt(button.getAttribute('data-id'), 10);
-            
-            // 14. Encontra o objeto 'medicao' correspondente no array original
-            const medicao = medicoes.find(m => m.id === medicaoId);
-            
-            // 15. Formata a data e hora para exibição no modal
-            const dataLeitura = new Date(medicao.dataMedicao).toLocaleString('pt-BR', {
-                dateStyle: 'short',
-                timeStyle: 'short'
-            });
-            
-            // 16. Formata o título do modal
-            const data = new Date(medicao.dataMedicao);
-            const mes = String(data.getMonth() + 1).padStart(2, '0');
-            const ano = data.getFullYear();
-            
-            // 17. Preenche o HTML do modal com os dados encontrados
-            modalTitulo.textContent = `Detalhes da Medição (${mes}/${ano})`;
-            modalVolume.textContent = `${medicao.volumeAgua.toFixed(4)} m³`;
-            modalConsumo.textContent = `${medicao.delta.toFixed(4)} m³`;
-            modalData.textContent = dataLeitura;
-            modalAtor.textContent = medicao.ator.nome;
-        });
-        
-        
-        // ----- LÓGICA DO GRÁFICO -----
-        
-        // 1. Preparar os dados para o gráfico
-        //    Gráficos ficam melhores em ordem cronológica (do mais antigo para o mais novo)
-        //    Usamos [...medicoes] para criar uma CÓPIA antes de inverter, para não afetar os cards.
-        const medicoesInvertidas = [...medicoes].reverse();
-        
-        // 2. Criar os arrays de 'labels' (eixo X) e 'data' (eixo Y)
-        const labelsGrafico = medicoesInvertidas.map(m => {
-            const data = new Date(m.dataMedicao);
-            const mes = String(data.getMonth() + 1).padStart(2, '0');
-            const ano = data.getFullYear();
-            return `${mes}/${ano}`; // Ex: "05/2025"
-        });
-        
-        const consumoDataGrafico = medicoesInvertidas.map(m => m.delta); // Ex: [12.45, 8.79, ...]
-        
-        // +++ 3. Criar o array de dados da "Média" (agora variável) +++
-        //    Mapeamos os 'labels' do gráfico e usamos o 'mediaLookup'
-        //    para encontrar a média de CADA mês correspondente.
-        const mediaDataGrafico = labelsGrafico.map(label => mediaLookup[label] || 0);
-        // Ex: [12.39, 13.01, 11.87, ...] (em vez de [50, 50, 50, ...])
-        
-        
-        // 4. Pegar o 'contexto' 2D do nosso canvas
-        const ctx = document.getElementById('meuGrafico').getContext('2d');
-        
-        // 5. Criar o gráfico!
-        const meuGrafico = new Chart(ctx, {
-            type: 'line', // Tipo do gráfico
-            data: {
-                labels: labelsGrafico, // Nossos labels do eixo X
-                datasets: [
-                {
-                    // Linha de Consumo
-                    label: 'Consumo (m³)',
-                    data: consumoDataGrafico, // Nossos dados do eixo Y
-                    borderColor: 'rgb(75, 192, 192)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    fill: true,
-                    tension: 0.1 // Deixa a linha levemente curvada
-                },
-                {
-                    // Linha da Média (agora variável)
-                    label: 'Média (m³)',
-                    data: mediaDataGrafico, // Nossos dados da média (agora dinâmicos)
-                    borderColor: 'rgb(255, 99, 132)', // Cor vermelha
-                    borderDash: [5, 5], // Faz a linha ser pontilhada
-                    fill: false,
-                    pointRadius: 0 // Não mostra pontos na linha da média
-                }
-                ]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Consumo (m³)'
-                        }
-                    }
+        document.addEventListener("DOMContentLoaded", function() {
+            const NOMES_MESES = [
+                'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+            ];
+
+            const mediaLookup = (medias || []).reduce((acc, media) => {
+                acc[media.mesAno] = Number(media.mediaConsumo || 0);
+                return acc;
+            }, {});
+
+            const medicoesEnriquecidas = (medicoes || []).map(m => {
+                const d = new Date(m.dataMedicao);
+                const mesNum = d.getMonth() + 1;
+                const mesStr = String(mesNum).padStart(2, '0');
+                const anoStr = String(d.getFullYear());
+                const chaveMesAno = `${mesStr}/${anoStr}`;
+                return {
+                    ...m,
+                    dataObj: d,
+                    anoStr: anoStr,
+                    mesNome: NOMES_MESES[d.getMonth()] || mesStr,
+                    mesAno: chaveMesAno,
+                    mediaCondominio: mediaLookup[chaveMesAno] || 0
+                };
+            }).sort((a, b) => b.dataObj - a.dataObj);
+
+            const anosDisponiveis = [...new Set(medicoesEnriquecidas.map(m => m.anoStr))]
+                .sort((a, b) => Number(b) - Number(a));
+
+            let anoSelecionado = anosDisponiveis.length > 0 ? anosDisponiveis[0] : 'TODOS';
+            let chartInstance = null;
+
+            const tabsContainer = document.getElementById('filtro-anos-tabs');
+            const cardsContainer = document.getElementById('cards-container');
+            const tituloAnoGrafico = document.getElementById('titulo-ano-grafico');
+
+            function formatarM3(valor) {
+                return Number(valor || 0).toLocaleString('pt-BR', {
+                    minimumFractionDigits: 4,
+                    maximumFractionDigits: 4
+                });
+            }
+
+            function renderizarAbasAnos() {
+                if (!tabsContainer) return;
+                tabsContainer.innerHTML = '';
+                if (anosDisponiveis.length === 0) return;
+
+                anosDisponiveis.forEach(ano => {
+                    const qtd = medicoesEnriquecidas.filter(m => m.anoStr === ano).length;
+                    const li = document.createElement('li');
+                    li.className = 'nav-item';
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = `nav-link btn-sm ${anoSelecionado === ano ? 'active fw-semibold' : ''}`;
+                    btn.innerHTML = `${ano} <span class="badge ${anoSelecionado === ano ? 'bg-light text-primary' : 'bg-secondary-subtle text-secondary'} ms-1">${qtd}</span>`;
+                    btn.addEventListener('click', () => {
+                        anoSelecionado = ano;
+                        atualizarSecaoHistorico();
+                    });
+                    li.appendChild(btn);
+                    tabsContainer.appendChild(li);
+                });
+
+                if (anosDisponiveis.length > 1) {
+                    const liTodos = document.createElement('li');
+                    liTodos.className = 'nav-item';
+                    const btnTodos = document.createElement('button');
+                    btnTodos.type = 'button';
+                    btnTodos.className = `nav-link btn-sm ${anoSelecionado === 'TODOS' ? 'active fw-semibold' : ''}`;
+                    btnTodos.innerHTML = `Todos os anos <span class="badge ${anoSelecionado === 'TODOS' ? 'bg-light text-primary' : 'bg-secondary-subtle text-secondary'} ms-1">${medicoesEnriquecidas.length}</span>`;
+                    btnTodos.addEventListener('click', () => {
+                        anoSelecionado = 'TODOS';
+                        atualizarSecaoHistorico();
+                    });
+                    liTodos.appendChild(btnTodos);
+                    tabsContainer.appendChild(liTodos);
                 }
             }
-        });
-    });
-</script>
-<!-- Bootstrap JavaScript Libraries -->
-<script
-src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
-integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
-crossorigin="anonymous"
-></script>
 
-<script
-src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"
-integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+"
-crossorigin="anonymous"
-></script>
+            function criarHtmlCardMes(m) {
+                const acimaDaMedia = m.delta > m.mediaCondominio && m.mediaCondominio > 0;
+                const classeConsumo = acimaDaMedia ? 'text-danger' : 'text-success';
+                const badgeComparativo = acimaDaMedia
+                    ? '<span class="badge text-bg-danger-subtle text-danger border border-danger-subtle">Acima da média</span>'
+                    : '<span class="badge text-bg-success-subtle text-success border border-success-subtle">Dentro da média</span>';
+
+                return `
+                    <div class="col">
+                        <div class="card card-mes-consolidado h-100">
+                            <div class="card-header gradient-card d-flex justify-content-between align-items-center py-2 px-3">
+                                <strong class="text-white">${m.mesNome}</strong>
+                                <span class="badge bg-white text-primary">${m.mesAno}</span>
+                            </div>
+                            <div class="card-body d-flex flex-column justify-content-between">
+                                <div>
+                                    <div class="mb-2">${badgeComparativo}</div>
+                                    <p class="card-text mb-1">
+                                        <span class="text-muted small d-block">Consumo da Residência</span>
+                                        <strong class="fs-6 ${classeConsumo}">${formatarM3(m.delta)} m³</strong>
+                                    </p>
+                                    <p class="card-text mb-3">
+                                        <span class="text-muted small d-block">Média do Condomínio</span>
+                                        <span class="fw-medium">${formatarM3(m.mediaCondominio)} m³</span>
+                                    </p>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-sm w-100"
+                                        data-bs-toggle="modal" data-bs-target="#staticBackdrop" data-id="${m.id}">
+                                    Ver Detalhe
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function atualizarKpis(listaFiltrada) {
+                const qtd = listaFiltrada.length;
+                const somaRes = listaFiltrada.reduce((acc, m) => acc + Number(m.delta || 0), 0);
+                const somaCond = listaFiltrada.reduce((acc, m) => acc + Number(m.mediaCondominio || 0), 0);
+                const mediaRes = qtd > 0 ? somaRes / qtd : 0;
+                const mediaCond = qtd > 0 ? somaCond / qtd : 0;
+                const eficientes = listaFiltrada.filter(m => m.mediaCondominio === 0 || m.delta <= m.mediaCondominio).length;
+
+                document.getElementById('kpi-total-periodo').innerText = `${formatarM3(somaRes)} m³`;
+                document.getElementById('kpi-qtd-meses').innerText = anoSelecionado === 'TODOS'
+                    ? `${qtd} meses consolidados no histórico completo`
+                    : `${qtd} ${qtd === 1 ? 'mês consolidado' : 'meses consolidados'} em ${anoSelecionado}`;
+
+                const elMediaRes = document.getElementById('kpi-media-residencia');
+                elMediaRes.innerText = `${formatarM3(mediaRes)} m³`;
+                elMediaRes.className = `fs-4 fw-bold mt-1 ${mediaCond > 0 && mediaRes > mediaCond ? 'text-danger' : 'text-success'}`;
+
+                document.getElementById('kpi-media-condominio').innerText = `${formatarM3(mediaCond)} m³`;
+                document.getElementById('kpi-meses-eficientes').innerText = `${eficientes} de ${qtd} meses`;
+            }
+
+            function atualizarGrafico(listaFiltrada) {
+                const cronologica = [...listaFiltrada].sort((a, b) => a.dataObj - b.dataObj);
+                const labels = cronologica.map(m => m.mesAno);
+                const dadosRes = cronologica.map(m => m.delta);
+                const dadosCond = cronologica.map(m => m.mediaCondominio);
+
+                if (tituloAnoGrafico) {
+                    tituloAnoGrafico.innerText = anoSelecionado === 'TODOS' ? 'Todos os Anos' : `Ano ${anoSelecionado}`;
+                }
+
+                const ctx = document.getElementById('meuGrafico').getContext('2d');
+                if (chartInstance) {
+                    chartInstance.data.labels = labels;
+                    chartInstance.data.datasets[0].data = dadosRes;
+                    chartInstance.data.datasets[1].data = dadosCond;
+                    chartInstance.update();
+                    return;
+                }
+
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Consumo da Residência (m³)',
+                                data: dadosRes,
+                                borderColor: 'rgb(24, 160, 214)',
+                                backgroundColor: 'rgba(24, 160, 214, 0.15)',
+                                fill: true,
+                                tension: 0.2,
+                                pointRadius: 4
+                            },
+                            {
+                                label: 'Média do Condomínio (m³)',
+                                data: dadosCond,
+                                borderColor: 'rgb(220, 53, 69)',
+                                borderDash: [6, 5],
+                                fill: false,
+                                pointRadius: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Consumo (m³)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function renderizarCards(listaFiltrada) {
+                cardsContainer.innerHTML = '';
+                if (listaFiltrada.length === 0) {
+                    cardsContainer.innerHTML = '<div class="alert alert-light border text-center text-muted mb-0">Nenhum registro consolidado disponível para este período.</div>';
+                    return;
+                }
+
+                if (anoSelecionado === 'TODOS') {
+                    anosDisponiveis.forEach(ano => {
+                        const doAno = listaFiltrada.filter(m => m.anoStr === ano);
+                        if (doAno.length === 0) return;
+                        const secaoHTML = `
+                            <div class="mb-4">
+                                <div class="ano-divisor-badge mb-3 d-flex justify-content-between align-items-center">
+                                    <span>Ano ${ano}</span>
+                                    <span class="badge bg-primary rounded-pill">${doAno.length} ${doAno.length === 1 ? 'mês' : 'meses'}</span>
+                                </div>
+                                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">
+                                    ${doAno.map(criarHtmlCardMes).join('')}
+                                </div>
+                            </div>
+                        `;
+                        cardsContainer.innerHTML += secaoHTML;
+                    });
+                } else {
+                    cardsContainer.innerHTML = `
+                        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">
+                            ${listaFiltrada.map(criarHtmlCardMes).join('')}
+                        </div>
+                    `;
+                }
+            }
+
+            function atualizarSecaoHistorico() {
+                renderizarAbasAnos();
+                const filtradas = anoSelecionado === 'TODOS'
+                    ? medicoesEnriquecidas
+                    : medicoesEnriquecidas.filter(m => m.anoStr === anoSelecionado);
+                atualizarKpis(filtradas);
+                atualizarGrafico(filtradas);
+                renderizarCards(filtradas);
+            }
+
+            atualizarSecaoHistorico();
+
+            // Lógica do Modal de Detalhes da Medição
+            const modalElement = document.getElementById('staticBackdrop');
+            const modalVolume = document.getElementById('modal-volume');
+            const modalConsumo = document.getElementById('modal-consumo');
+            const modalData = document.getElementById('modal-data');
+            const modalAtor = document.getElementById('modal-ator');
+            const modalTitulo = document.getElementById('staticBackdropLabel');
+
+            modalElement.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const medicaoId = parseInt(button.getAttribute('data-id'), 10);
+                const medicao = medicoes.find(m => m.id === medicaoId);
+                if (!medicao) return;
+
+                const dataLeitura = new Date(medicao.dataMedicao).toLocaleString('pt-BR', {
+                    dateStyle: 'short',
+                    timeStyle: 'short'
+                });
+
+                const data = new Date(medicao.dataMedicao);
+                const mes = String(data.getMonth() + 1).padStart(2, '0');
+                const ano = data.getFullYear();
+
+                modalTitulo.textContent = `Detalhes da Medição (${mes}/${ano})`;
+                modalVolume.textContent = `${formatarM3(medicao.volumeAgua)} m³`;
+                modalConsumo.textContent = `${formatarM3(medicao.delta)} m³`;
+                modalData.textContent = dataLeitura;
+                modalAtor.textContent = medicao.ator ? medicao.ator.nome : '--';
+            });
+        });
+    </script>
+
+    <!-- Bootstrap JavaScript Libraries -->
+    <script
+        src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+        crossorigin="anonymous"
+    ></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"
+        integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+"
+        crossorigin="anonymous"
+    ></script>
 </body>
 </html>
