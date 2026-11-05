@@ -78,3 +78,5 @@ node_modules/
 dist/
 
 application-dev.properties
+prompt-tarefa.txt
+execucao-antigravity.log
