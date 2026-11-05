@@ -54,6 +54,7 @@
                     <select class="form-select" aria-label="Default select example" name="residencia" id="residencia">
                         <option th:each="s : ${residencias}" 
                         th:value="${s.id}" 
+                        th:selected="${s.id == idResidencia}"
                         th:text="${s.numero}">
                     </option>
                 </select>
@@ -77,6 +78,72 @@
             <span class="status-dot"></span> Monitoramento Ativo | Ultima Leitura: <span id="hora-consumo" th:text="${horaUltimaMedicao}">--:--</span>
         </p>
     </div>
+
+    <!-- Card: Diagnóstico da Rede Hidráulica / Detecção de Vazamentos -->
+    <div id="card-diagnostico-vazamento"
+         class="diagnostico-vazamento-card"
+         th:classappend="${analiseVazamento == null or !analiseVazamento.analiseDisponivel} ? 'diagnostico-indisponivel' : (${analiseVazamento.vazamentoDetectado and analiseVazamento.nivelRisco == 'Alto'} ? 'diagnostico-alerta' : (${analiseVazamento.vazamentoDetectado or analiseVazamento.nivelRisco == 'Moderado'} ? 'diagnostico-moderado' : 'diagnostico-normal'))">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <div>
+                <h5 class="mb-0 fw-bold">Diagnóstico da Rede Hidráulica / Detecção de Vazamentos</h5>
+                <small class="text-muted">Análise preditiva baseada no perfil recente de demanda hídrica</small>
+            </div>
+            <button type="button" id="btn-atualizar-diagnostico" class="btn btn-outline-primary btn-sm">
+                Atualizar Diagnóstico
+            </button>
+        </div>
+
+        <div class="row align-items-center g-3 my-1">
+            <div class="col-md-7">
+                <div class="small text-uppercase text-muted fw-semibold mb-1">Status Atual da Rede</div>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <span id="diagnostico-status"
+                          class="fs-5 fw-bold"
+                          th:classappend="${analiseVazamento == null or !analiseVazamento.analiseDisponivel} ? 'text-secondary' : (${analiseVazamento.vazamentoDetectado and analiseVazamento.nivelRisco == 'Alto'} ? 'text-danger' : (${analiseVazamento.vazamentoDetectado or analiseVazamento.nivelRisco == 'Moderado'} ? 'text-warning' : 'text-success'))"
+                          th:text="${analiseVazamento != null ? analiseVazamento.status : 'Dados insuficientes para análise'}">
+                        Rede Normal
+                    </span>
+                    <span id="diagnostico-risco-badge"
+                          class="badge rounded-pill"
+                          th:classappend="${analiseVazamento == null or !analiseVazamento.analiseDisponivel} ? 'text-bg-secondary' : (${analiseVazamento.vazamentoDetectado and analiseVazamento.nivelRisco == 'Alto'} ? 'text-bg-danger' : (${analiseVazamento.vazamentoDetectado or analiseVazamento.nivelRisco == 'Moderado'} ? 'text-bg-warning' : 'text-bg-success'))"
+                          th:text="${analiseVazamento != null and analiseVazamento.analiseDisponivel ? 'Risco ' + analiseVazamento.nivelRisco : 'Aguardando Leituras'}">
+                        Risco Baixo
+                    </span>
+                </div>
+            </div>
+
+            <div class="col-md-5 text-md-end">
+                <div class="small text-uppercase text-muted fw-semibold mb-1">Probabilidade Estimada de Vazamento</div>
+                <div id="diagnostico-probabilidade"
+                     class="diagnostico-prob-valor"
+                     th:classappend="${analiseVazamento == null or !analiseVazamento.analiseDisponivel} ? 'text-secondary' : (${analiseVazamento.vazamentoDetectado and analiseVazamento.nivelRisco == 'Alto'} ? 'text-danger' : (${analiseVazamento.vazamentoDetectado or analiseVazamento.nivelRisco == 'Moderado'} ? 'text-warning' : 'text-success'))"
+                     th:text="${analiseVazamento != null and analiseVazamento.analiseDisponivel ? #numbers.formatDecimal(analiseVazamento.probabilidadeVazamento, 1, 'POINT', 2, 'COMMA') + '%' : '--%'}">
+                    0,00%
+                </div>
+                <div class="progress mt-2" style="height: 8px;" role="progressbar" aria-label="Probabilidade de vazamento">
+                    <div id="diagnostico-progress-bar"
+                         class="progress-bar"
+                         th:classappend="${analiseVazamento == null or !analiseVazamento.analiseDisponivel} ? 'bg-secondary' : (${analiseVazamento.vazamentoDetectado and analiseVazamento.nivelRisco == 'Alto'} ? 'bg-danger' : (${analiseVazamento.vazamentoDetectado or analiseVazamento.nivelRisco == 'Moderado'} ? 'bg-warning' : 'bg-success'))"
+                         th:style="'width: ' + (${analiseVazamento != null and analiseVazamento.analiseDisponivel ? analiseVazamento.probabilidadeVazamento : 0}) + '%'">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="diagnostico-orientacao-box mt-3">
+            <strong class="d-block mb-1">Orientação ao Morador:</strong>
+            <p id="diagnostico-mensagem" class="mb-0 text-body"
+               th:text="${analiseVazamento != null ? analiseVazamento.mensagemOrientativa : 'O monitoramento automático será ativado assim que houver leituras disponíveis.'}">
+                O perfil de consumo da sua residência está dentro da normalidade esperada.
+            </p>
+        </div>
+
+        <div class="d-flex flex-wrap justify-content-between text-muted small mt-2 gap-2">
+            <span>Leituras recentes avaliadas: <strong id="diagnostico-leituras" th:text="${analiseVazamento != null and analiseVazamento.quantidadeLeituras != null ? analiseVazamento.quantidadeLeituras : 0}">0</strong></span>
+            <span>Última verificação: <span id="diagnostico-hora" th:text="${analiseVazamento != null and analiseVazamento.dataHoraAnalise != null ? analiseVazamento.dataHoraAnalise : '--:--'}">--:--</span></span>
+        </div>
+    </div>
+
     <div id="cards-container" class="d-flex my-2 overflow-x-auto gap-2">
     </div> 
 
@@ -150,6 +217,96 @@
 
         // Atualiza a cada 30 segundos (30000 ms) para não sobrecarregar o banco
         setInterval(atualizarHidrometro, 30000);
+
+        const analiseInicial = /*[[${analiseVazamento}]]*/ null;
+
+        function renderizarDiagnosticoVazamento(dados) {
+            if (!dados) return;
+
+            const cardEl = document.getElementById('card-diagnostico-vazamento');
+            const statusEl = document.getElementById('diagnostico-status');
+            const badgeEl = document.getElementById('diagnostico-risco-badge');
+            const probEl = document.getElementById('diagnostico-probabilidade');
+            const barEl = document.getElementById('diagnostico-progress-bar');
+            const msgEl = document.getElementById('diagnostico-mensagem');
+            const leiturasEl = document.getElementById('diagnostico-leituras');
+            const horaEl = document.getElementById('diagnostico-hora');
+
+            const disponivel = Boolean(dados.analiseDisponivel);
+            const vazamento = Boolean(dados.vazamentoDetectado);
+            const risco = dados.nivelRisco || 'Indisponível';
+            const probNum = Number(dados.probabilidadeVazamento || 0);
+
+            let cardClasse = 'diagnostico-indisponivel';
+            let textoClasse = 'text-secondary';
+            let badgeClasse = 'text-bg-secondary';
+            let barraClasse = 'bg-secondary';
+
+            if (disponivel) {
+                if (vazamento && risco.toLowerCase() === 'alto') {
+                    cardClasse = 'diagnostico-alerta';
+                    textoClasse = 'text-danger';
+                    badgeClasse = 'text-bg-danger';
+                    barraClasse = 'bg-danger';
+                } else if (vazamento || risco.toLowerCase() === 'moderado') {
+                    cardClasse = 'diagnostico-moderado';
+                    textoClasse = 'text-warning';
+                    badgeClasse = 'text-bg-warning';
+                    barraClasse = 'bg-warning';
+                } else {
+                    cardClasse = 'diagnostico-normal';
+                    textoClasse = 'text-success';
+                    badgeClasse = 'text-bg-success';
+                    barraClasse = 'bg-success';
+                }
+            }
+
+            cardEl.className = `diagnostico-vazamento-card ${cardClasse}`;
+            statusEl.className = `fs-5 fw-bold ${textoClasse}`;
+            statusEl.innerText = dados.status || 'Dados insuficientes para análise';
+
+            badgeEl.className = `badge rounded-pill ${badgeClasse}`;
+            badgeEl.innerText = disponivel ? `Risco ${risco}` : 'Aguardando Leituras';
+
+            probEl.className = `diagnostico-prob-valor ${textoClasse}`;
+            probEl.innerText = disponivel
+                ? `${probNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`
+                : '--%';
+
+            barEl.className = `progress-bar ${barraClasse}`;
+            barEl.style.width = `${disponivel ? Math.min(100, Math.max(0, probNum)) : 0}%`;
+
+            msgEl.innerText = dados.mensagemOrientativa || '';
+            leiturasEl.innerText = dados.quantidadeLeituras != null ? dados.quantidadeLeituras : 0;
+            horaEl.innerText = dados.dataHoraAnalise || '--:--';
+        }
+
+        async function atualizarDiagnosticoVazamento() {
+            const btn = document.getElementById('btn-atualizar-diagnostico');
+            if (btn) btn.disabled = true;
+            try {
+                const response = await fetch(`/residencia/${idResidencia}/vazamento`);
+                if (response.ok) {
+                    const dados = await response.json();
+                    renderizarDiagnosticoVazamento(dados);
+                }
+            } catch (error) {
+                console.error("Erro ao atualizar diagnóstico de vazamento:", error);
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        if (analiseInicial) {
+            renderizarDiagnosticoVazamento(analiseInicial);
+        }
+
+        const btnAtualizarDiag = document.getElementById('btn-atualizar-diagnostico');
+        if (btnAtualizarDiag) {
+            btnAtualizarDiag.addEventListener('click', atualizarDiagnosticoVazamento);
+        }
+
+        setInterval(atualizarDiagnosticoVazamento, 30000);
     var medicoes = /*[[${medicoes}]]*/ [];
     var medias = /*[[${medias}]]*/ [];
     // ----- INÍCIO DO SCRIPT -----

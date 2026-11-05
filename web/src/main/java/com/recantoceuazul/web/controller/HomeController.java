@@ -165,6 +165,7 @@ public String mostrarDashboardMorador(
         } else {
             // Caso extremo: usuário logado não tem nenhuma residência cadastrada
             model.addAttribute("consumoAtual", 0.0);
+            model.addAttribute("analiseVazamento", AnaliseVazamentoResponse.indisponivelPadrao(0));
             return "dashboardMorador";
         }
     }
@@ -200,6 +201,20 @@ public String mostrarDashboardMorador(
         model.addAttribute("horaUltimaMedicao", "--:--");
         model.addAttribute("medicoes", new ArrayList<>());
         model.addAttribute("medias", new ArrayList<>());
+    }
+
+    // 6. Busca Diagnóstico Preditivo de Vazamentos de forma isolada (sem impactar o restante do painel)
+    try {
+        ResponseEntity<AnaliseVazamentoResponse> responseVazamento = restTemplate.getForEntity(
+                montarUrlApi("/residencia/" + residenciaIdBusca + "/vazamento"),
+                AnaliseVazamentoResponse.class
+        );
+        AnaliseVazamentoResponse analise = responseVazamento.getBody();
+        model.addAttribute("analiseVazamento",
+                analise != null ? analise : AnaliseVazamentoResponse.indisponivelPadrao(residenciaIdBusca));
+    } catch (Exception e) {
+        System.err.println("Erro ao consultar diagnóstico de vazamento: " + e.getMessage());
+        model.addAttribute("analiseVazamento", AnaliseVazamentoResponse.indisponivelPadrao(residenciaIdBusca));
     }
 
     return "dashboardMorador";
@@ -480,6 +495,41 @@ public String mostrarDashboardMorador(
     @ResponseBody
     public MedicaoHojeResponse buscarConsumoHoje(@PathVariable Integer id) {
         return restTemplate.getForObject(API_URL + "/medicao/hoje/residencia/" + id, MedicaoHojeResponse.class);
+    }
+
+    @GetMapping("/residencia/{id}/vazamento")
+    @ResponseBody
+    public ResponseEntity<AnaliseVazamentoResponse> buscarDiagnosticoVazamento(
+            @PathVariable Integer id,
+            HttpSession session) {
+        Ator usuario = (Ator) session.getAttribute("usuarioLogado");
+        if (usuario == null || usuario.getPapel() == null) {
+            return ResponseEntity.status(401).body(AnaliseVazamentoResponse.indisponivelPadrao(id));
+        }
+        if ("MORAR".equals(usuario.getPapel())) {
+            boolean pertenceAoMorador = usuario.getResidencias() != null
+                    && usuario.getResidencias().stream().anyMatch(r -> r.getId() == id);
+            if (!pertenceAoMorador) {
+                return ResponseEntity.status(403).body(AnaliseVazamentoResponse.indisponivelPadrao(id));
+            }
+        }
+        try {
+            AnaliseVazamentoResponse resp = restTemplate.getForObject(
+                    montarUrlApi("/residencia/" + id + "/vazamento"),
+                    AnaliseVazamentoResponse.class
+            );
+            return ResponseEntity.ok(resp != null ? resp : AnaliseVazamentoResponse.indisponivelPadrao(id));
+        } catch (Exception e) {
+            return ResponseEntity.ok(AnaliseVazamentoResponse.indisponivelPadrao(id));
+        }
+    }
+
+    private String montarUrlApi(String caminho) {
+        String base = API_URL != null && API_URL.endsWith("/")
+                ? API_URL.substring(0, API_URL.length() - 1)
+                : API_URL;
+        String sufixo = caminho.startsWith("/") ? caminho : "/" + caminho;
+        return base + sufixo;
     }
     
 }
