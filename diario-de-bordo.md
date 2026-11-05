@@ -250,4 +250,22 @@ Na aplicação web (`Spring Boot + Thymeleaf + Bootstrap 5`), o `HomeController`
   - Validação HTTP ponta a ponta nos serviços ativos (`ml-service` na porta `8000`, `api` na porta `8081` e `web` na porta `8080`) via `GET /api/residencia/{1,2,5,8,12,16,20}/vazamento`, `GET /api/medicao/hoje/residencia/1` e renderização autenticada de `/morador?residencia=1`.
 - **Hash/Mensagem do Commit Associado**:
   - Commit Dados: `44b23bc` — `chore(dados): atualiza consolidacoes ate 09/2026 e telemetria influx ate 05/11/2026`
-  - Commit Documentação: `docs(diario): registra carga de dados calibrados para apresentacao`
+  - Commit Documentação: `f85562b` — `docs(diario): registra carga de dados calibrados para apresentacao`
+
+---
+
+## Etapa 8 — Consolidação Forçada de Outubro/2026 (`10/2026`) no MySQL a partir do InfluxDB
+
+- **Data/Hora e Etapa**: `2026-11-05 10:29 BRT` — Etapa 8: Execução da Consolidação Mensal de Outubro/2026 (`10/2026`) a partir da Série Real do InfluxDB para Todas as 20 Residências.
+- **Arquivos Criados/Modificados**:
+  - `mysql-init/init.sql` (modificado — inclusão dos registros consolidados `341..360` referentes a `10/2026` com ator `18` — *Fiscalização Automática*)
+  - `diario-de-bordo.md` (modificado — registro da consolidação de outubro e conferência do hidrômetro digital)
+- **Decisões de Arquitetura e Implementação**:
+  - Executada a query Flux de fechamento mensal (`medicoesDoMesPassado()`, janela `2026-10-01T00:00:00-03:00` a `2026-11-01T00:00:00-03:00`) diretamente sobre o InfluxDB para apurar o consumo exato de cada unidade em outubro (`volume_litros / 1000`).
+  - Persistidos os 20 registros consolidados (`id` `341` a `360`, `data_medicao = '2026-10-31 23:59:00'`, `fk_Ator_id = 18` — *Fiscalização Automática*) no banco MySQL ativo e sincronizados em `mysql-init/init.sql`, totalizando `360` medições consolidadas (18 meses por residência, de `05/2025` a `10/2026`).
+  - Com `10/2026` consolidado no MySQL, o hidrômetro digital (`getMedicaoHoje`) passa a somar o fechamento de outubro com o consumo em aberto de novembro (`01/11/2026` a `05/11/2026`), refletindo 100% do volume acumulado no InfluxDB (ex.: Residência 120: `1456,21 m³` de Out/2026 + `2,35 m³` de Nov/2026 = `1458,56 m³`).
+- **Validação/Testes Realizados**:
+  - Conferência em `GET /api/medicao/hoje/residencia/20` (`1458,5607 m³`), `GET /api/medicao/residencia/20` (`id=360`, `volumeAgua=1456.21`, `delta=12.25`) e `GET /api/medicao/media` (`10/2026` = `12,11 m³`).
+- **Hash/Mensagem do Commit Associado**:
+  - Commit Dados: `4476e8e` — `chore(dados): consolida consumo de outubro de 2026 no mysql a partir do influxdb`
+  - Commit Documentação: `docs(diario): registra consolidacao de outubro de 2026 no mysql`
