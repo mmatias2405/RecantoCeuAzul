@@ -227,3 +227,27 @@ Na aplicação web (`Spring Boot + Thymeleaf + Bootstrap 5`), o `HomeController`
 - **Hash/Mensagem do Commit Associado**:
   - Commit API/ML: `9b0df10` — `feat(api): identifica momento inicial de indicio de vazamento nas leituras do influxdb`
   - Commit UI/Web: `351cdd0` — `feat(ui): organiza historico por ano e exibe inicio do indicio de vazamento`
+
+---
+
+## Etapa 7 — Atualização de Consolidações MySQL (`09/2026`) e Carga Calibrada de Telemetria no InfluxDB (`01/10/2026` a `05/11/2026`)
+
+- **Data/Hora e Etapa**: `2026-11-05 10:04 BRT` — Etapa 7: Limpeza da Série Temporal do InfluxDB, Geração de Consolidações Mensais no MySQL até `09/2026` e População de Telemetria Calibrada (`01/10/2026`–`05/11/2026`) com Cenários de Vazamento para Apresentação.
+- **Arquivos Criados/Modificados**:
+  - `mysql-init/init.sql` (modificado — correção da ordenação cronológica interanual nas views `v_media_consumo_condominio` e `v_dashboard_mensal` via `MIN(data_medicao)` e adição dos registros consolidados `221..340` de `04/2026` a `09/2026`)
+  - `influxdb-init/dummy-data.lp` (modificado — substituição integral por `720` pontos em *Line Protocol* cobrindo `01/10/2026` a `05/11/2026` para as 20 residências)
+  - `diario-de-bordo.md` (modificado — documentação técnica da calibração de dados e validação fim a fim)
+- **Decisões de Arquitetura e Implementação**:
+  - **Consolidação Relacional Fiel à Média Histórica (MySQL)**: Expandiu-se a tabela `medicao` de `220` para `340` registros (17 meses por residência, de `05/2025` até `09/2026`), preservando a média mensal individual de cada unidade (`~10,50 m³` a `13,81 m³`) com leve sazonalidade e continuidade exata do acumulado `volume_agua`. Também foi corrigido o `ORDER BY DATE_FORMAT(...)` nas duas views SQL do condomínio para ordenar cronologicamente por `MIN(data_medicao)` entre 2025 e 2026.
+  - **Limpeza e Nova Série Temporal no InfluxDB (`01/10/2026`–`05/11/2026`)**: Todos os dados anteriores do bucket `home` foram expurgados via API `POST /api/v2/delete`, seguidos pela gravação de 36 leituras diárias por residência (`720` registros totais). O consumo acumulado de outubro mantém a mesma média mensal registrada na consolidação do MySQL, enquanto os 5 primeiros dias de novembro alimentam em tempo real o hidrômetro digital (`getConsumoHoje`).
+  - **Cenários Preditivos Calibrados para Demonstração**: Enquanto 16 residências operam em regime estritamente normal (`Rede Normal`, risco `Baixo`, probabilidade `< 27%`), 4 unidades foram calibradas com anomalias progressivas com horários de início rastreáveis:
+    - **Residência 101 (`id=1`, Ana Silva)**: **Alerta Crítico (`93,83%`, Risco Alto)** — indício iniciado em `30/10/2026 às 03:15` (contrastando com sua segunda unidade, **Residência 116**, em `Rede Normal` com `25,18%`);
+    - **Residência 108 (`id=8`, Heitor Nunes)**: **Alerta Crítico (`86,65%`, Risco Alto)** — indício iniciado em `01/11/2026 às 06:40` (contrastando com a **Residência 102**, em `Rede Normal` com `0,00%`);
+    - **Residência 112 (`id=12`, Marcos Souza)**: **Alerta Crítico (`89,80%`, Risco Alto)** — indício iniciado em `28/10/2026 às 04:10`;
+    - **Residência 120 (`id=20`, Elisa Gomes)**: **Atenção Moderada (`63,28%`, Risco Moderado)** — indício recente iniciado em `02/11/2026 às 02:30` (contrastando com a **Residência 105**, em `Rede Normal` com `1,25%`).
+- **Validação/Testes Realizados**:
+  - Verificação direta nos bancos em execução (`340` registros em `recantoceuazul.medicao` até `2026-09-28` e `720` pontos no InfluxDB `home` até `2026-11-05`).
+  - Validação HTTP ponta a ponta nos serviços ativos (`ml-service` na porta `8000`, `api` na porta `8081` e `web` na porta `8080`) via `GET /api/residencia/{1,2,5,8,12,16,20}/vazamento`, `GET /api/medicao/hoje/residencia/1` e renderização autenticada de `/morador?residencia=1`.
+- **Hash/Mensagem do Commit Associado**:
+  - Commit Dados: `44b23bc` — `chore(dados): atualiza consolidacoes ate 09/2026 e telemetria influx ate 05/11/2026`
+  - Commit Documentação: `docs(diario): registra carga de dados calibrados para apresentacao`
