@@ -7,6 +7,7 @@ import com.influxdb.client.domain.WritePrecision;
 import com.influxdb.client.write.Point;
 import com.influxdb.query.FluxRecord;
 import com.influxdb.query.FluxTable;
+import com.recantoceuazul.api.dto.LeituraTemporalDTO;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -116,6 +117,44 @@ public class InfluxDbService {
                     leiturasPorResidencia
                             .computeIfAbsent(resId, k -> new ArrayList<>())
                             .add(valorNum.doubleValue());
+                }
+            }
+        }
+
+        return leiturasPorResidencia;
+    }
+
+    /**
+     * Recupera as últimas leituras temporais (timestamp + volume_litros) agrupadas por residência,
+     * permitindo tanto o cálculo das features do modelo quanto o rastreamento do momento inicial de anomalia.
+     */
+    public Map<String, List<LeituraTemporalDTO>> buscarUltimasLeiturasTemporaisCondominio(int limitePorResidencia) {
+        String bucketAlvo = (bucket != null && !bucket.isBlank()) ? bucket : "home";
+        String query = String.format(
+            "from(bucket: \"%s\")\n" +
+            "  |> range(start: -365d)\n" +
+            "  |> filter(fn: (r) => r[\"_measurement\"] == \"consumo_agua\")\n" +
+            "  |> filter(fn: (r) => r[\"_field\"] == \"volume_litros\")\n" +
+            "  |> group(columns: [\"residenciaId\"])\n" +
+            "  |> sort(columns: [\"_time\"])\n" +
+            "  |> tail(n: %d)",
+            bucketAlvo,
+            limitePorResidencia
+        );
+
+        List<FluxTable> tables = influxDBClient.getQueryApi().query(query, org);
+        Map<String, List<LeituraTemporalDTO>> leiturasPorResidencia = new LinkedHashMap<>();
+
+        for (FluxTable table : tables) {
+            for (FluxRecord record : table.getRecords()) {
+                Object resKey = record.getValueByKey("residenciaId");
+                Object valorObj = record.getValue();
+                Instant tempo = record.getTime();
+                if (resKey != null && valorObj instanceof Number valorNum) {
+                    String resId = resKey.toString();
+                    leiturasPorResidencia
+                            .computeIfAbsent(resId, k -> new ArrayList<>())
+                            .add(new LeituraTemporalDTO(tempo, valorNum.doubleValue()));
                 }
             }
         }

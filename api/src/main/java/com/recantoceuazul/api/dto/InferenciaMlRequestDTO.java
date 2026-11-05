@@ -21,15 +21,28 @@ public class InferenciaMlRequestDTO {
 
     private List<Double> leiturasLitros;
 
+    private List<String> timestampsLeituras;
+
     public InferenciaMlRequestDTO() {
     }
 
     public InferenciaMlRequestDTO(Integer residenciaId, Double zDMed, Double zDMax, Double zDStd, List<Double> leiturasLitros) {
+        this(residenciaId, zDMed, zDMax, zDStd, leiturasLitros, null);
+    }
+
+    public InferenciaMlRequestDTO(
+            Integer residenciaId,
+            Double zDMed,
+            Double zDMax,
+            Double zDStd,
+            List<Double> leiturasLitros,
+            List<String> timestampsLeituras) {
         this.residenciaId = residenciaId;
         this.zDMed = zDMed;
         this.zDMax = zDMax;
         this.zDStd = zDStd;
         this.leiturasLitros = leiturasLitros;
+        this.timestampsLeituras = timestampsLeituras;
     }
 
     public Integer getResidenciaId() {
@@ -70,5 +83,13 @@ public class InferenciaMlRequestDTO {
 
     public void setLeiturasLitros(List<Double> leiturasLitros) {
         this.leiturasLitros = leiturasLitros;
+    }
+
+    public List<String> getTimestampsLeituras() {
+        return timestampsLeituras;
+    }
+
+    public void setTimestampsLeituras(List<String> timestampsLeituras) {
+        this.timestampsLeituras = timestampsLeituras;
     }
 }

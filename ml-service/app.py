@@ -34,6 +34,7 @@ class PredicaoVazamentoRequest(BaseModel):
     z_d_max: Optional[float] = Field(default=None, alias="Z_D_Max")
     z_d_std: Optional[float] = Field(default=None, alias="Z_D_Std")
     leituras_litros: Optional[List[float]] = Field(default=None, alias="leiturasLitros")
+    timestamps_leituras: Optional[List[str]] = Field(default=None, alias="timestampsLeituras")
     referencia: Optional[ReferenciaDemanda] = None
 
 
@@ -44,6 +45,7 @@ class PredicaoVazamentoResponse(BaseModel):
     classePredita: int
     probabilidadeVazamento: float
     nivelRisco: str
+    inicioIndicioVazamento: Optional[str] = None
     featuresUtilizadas: Dict[str, float]
 
 

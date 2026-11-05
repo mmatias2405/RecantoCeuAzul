@@ -8,6 +8,7 @@ public class InferenciaMlResponseDTO {
     private int classePredita;
     private double probabilidadeVazamento;
     private String nivelRisco;
+    private String inicioIndicioVazamento;
     private Map<String, Double> featuresUtilizadas;
 
     public InferenciaMlResponseDTO() {
@@ -43,6 +44,14 @@ public class InferenciaMlResponseDTO {
 
     public void setNivelRisco(String nivelRisco) {
         this.nivelRisco = nivelRisco;
+    }
+
+    public String getInicioIndicioVazamento() {
+        return inicioIndicioVazamento;
+    }
+
+    public void setInicioIndicioVazamento(String inicioIndicioVazamento) {
+        this.inicioIndicioVazamento = inicioIndicioVazamento;
     }
 
     public Map<String, Double> getFeaturesUtilizadas() {

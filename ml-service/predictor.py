@@ -12,8 +12,10 @@ import json
 import os
 import sys
 import warnings
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from zoneinfo import ZoneInfo
 
 import joblib
 import numpy as np
@@ -141,6 +143,52 @@ class ModeloVazamentoPredictor:
             return "Moderado"
         return "Baixo"
 
+    @staticmethod
+    def identificar_inicio_indicio(
+        leituras_raw: Optional[List[float]],
+        timestamps_raw: Optional[List[str]],
+    ) -> Optional[str]:
+        if not leituras_raw or not timestamps_raw or len(leituras_raw) != len(timestamps_raw):
+            return None
+
+        vals = np.asarray(leituras_raw, dtype=np.float64)
+        if vals.size < 3:
+            return None
+
+        mediana = float(np.median(vals))
+        mad = float(np.median(np.abs(vals - mediana)))
+        sigma_rob = max(mad * 1.4826, 15.0)
+        limiar = mediana + 2.2 * sigma_rob
+
+        n = vals.size
+        onset_idx: Optional[int] = None
+        i = n - 1
+        tolerancia_queda = 1
+        while i >= 0:
+            if vals[i] >= limiar:
+                onset_idx = i
+                tolerancia_queda = 1
+                i -= 1
+            elif onset_idx is not None and tolerancia_queda > 0 and i > 0 and vals[i - 1] >= limiar:
+                tolerancia_queda -= 1
+                i -= 1
+            else:
+                if onset_idx is not None:
+                    break
+                i -= 1
+
+        if onset_idx is None:
+            acima = np.where(vals >= limiar)[0]
+            onset_idx = int(acima[0]) if acima.size > 0 else int(np.argmax(vals))
+
+        ts_str = timestamps_raw[onset_idx]
+        try:
+            dt = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+            dt_br = dt.astimezone(ZoneInfo("America/Sao_Paulo"))
+            return dt_br.strftime("%d/%m/%Y às %H:%M")
+        except Exception:
+            return ts_str
+
     def prever_dict(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         features_map = self.extrair_features(payload)
         ordered_vector = np.array(
@@ -164,11 +212,22 @@ class ModeloVazamentoPredictor:
         prob_arredondada = round(prob_vazamento, 2)
         nivel_risco = self.classificar_risco(prob_arredondada, vazamento_detectado)
 
+        inicio_indicio: Optional[str] = None
+        if vazamento_detectado or prob_arredondada >= 40.0:
+            leituras_raw = self._get_first_present(
+                payload, "leiturasLitros", "leituras_litros", "leituras"
+            )
+            timestamps_raw = self._get_first_present(
+                payload, "timestampsLeituras", "timestamps_leituras", "timestamps"
+            )
+            inicio_indicio = self.identificar_inicio_indicio(leituras_raw, timestamps_raw)
+
         return {
             "vazamentoDetectado": vazamento_detectado,
             "classePredita": classe_predita,
             "probabilidadeVazamento": prob_arredondada,
             "nivelRisco": nivel_risco,
+            "inicioIndicioVazamento": inicio_indicio,
             "featuresUtilizadas": {k: round(v, 4) for k, v in features_map.items()},
         }
 

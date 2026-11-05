@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.recantoceuazul.api.dto.AnaliseVazamentoResponseDTO;
 import com.recantoceuazul.api.dto.InferenciaMlRequestDTO;
 import com.recantoceuazul.api.dto.InferenciaMlResponseDTO;
+import com.recantoceuazul.api.dto.LeituraTemporalDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -19,7 +20,13 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -29,7 +36,7 @@ import java.util.stream.Collectors;
 public class VazamentoService {
 
     public static final int MIN_LEITURAS_ANALISE = 3;
-    public static final int LIMITE_JANELA_LEITURAS = 30;
+    public static final int LIMITE_JANELA_LEITURAS = 40;
 
     private static final double DEFAULT_MU_MED = 408.7336;
     private static final double DEFAULT_SD_MED = 53.1663;
@@ -37,6 +44,10 @@ public class VazamentoService {
     private static final double DEFAULT_SD_MAX = 62.2806;
     private static final double DEFAULT_MU_STD = 47.7795;
     private static final double DEFAULT_SD_STD = 8.2275;
+
+    private static final ZoneId ZONA_BR = ZoneId.of("America/Sao_Paulo");
+    private static final DateTimeFormatter FORMATADOR_INICIO_VAZAMENTO =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm").withZone(ZONA_BR);
 
     private final InfluxDbService influxDbService;
     private final ObjectMapper objectMapper;
@@ -72,9 +83,25 @@ public class VazamentoService {
     }
 
     public AnaliseVazamentoResponseDTO analisarVazamentoResidencia(Integer residenciaId) {
-        Map<String, List<Double>> leiturasCondominio;
+        Map<String, List<LeituraTemporalDTO>> leiturasTemporais;
+        Map<String, List<Double>> leiturasCondominio = new LinkedHashMap<>();
+
         try {
-            leiturasCondominio = influxDbService.buscarUltimasLeiturasCondominio(LIMITE_JANELA_LEITURAS);
+            leiturasTemporais = influxDbService.buscarUltimasLeiturasTemporaisCondominio(LIMITE_JANELA_LEITURAS);
+            if (leiturasTemporais != null && !leiturasTemporais.isEmpty()) {
+                for (Map.Entry<String, List<LeituraTemporalDTO>> entry : leiturasTemporais.entrySet()) {
+                    List<Double> valores = entry.getValue().stream()
+                            .map(LeituraTemporalDTO::getVolumeLitros)
+                            .collect(Collectors.toList());
+                    leiturasCondominio.put(entry.getKey(), valores);
+                }
+            } else {
+                leiturasTemporais = Collections.emptyMap();
+                Map<String, List<Double>> legado = influxDbService.buscarUltimasLeiturasCondominio(LIMITE_JANELA_LEITURAS);
+                if (legado != null) {
+                    leiturasCondominio.putAll(legado);
+                }
+            }
         } catch (Exception e) {
             return AnaliseVazamentoResponseDTO.servicoIndisponivel(
                     residenciaId,
@@ -82,10 +109,28 @@ public class VazamentoService {
             );
         }
 
-        List<Double> brutas = leiturasCondominio.getOrDefault(String.valueOf(residenciaId), List.of());
-        List<Double> leiturasValidas = brutas.stream()
-                .filter(v -> v != null && Double.isFinite(v) && v >= 0.0)
+        String chaveRes = String.valueOf(residenciaId);
+        List<LeituraTemporalDTO> serieTemporalRes = leiturasTemporais.getOrDefault(chaveRes, List.of()).stream()
+                .filter(p -> p != null && Double.isFinite(p.getVolumeLitros()) && p.getVolumeLitros() >= 0.0)
                 .collect(Collectors.toList());
+
+        List<Double> leiturasValidas;
+        List<String> timestampsIso = null;
+        if (!serieTemporalRes.isEmpty()) {
+            leiturasValidas = serieTemporalRes.stream()
+                    .map(LeituraTemporalDTO::getVolumeLitros)
+                    .collect(Collectors.toList());
+            if (serieTemporalRes.stream().allMatch(p -> p.getTimestamp() != null)) {
+                timestampsIso = serieTemporalRes.stream()
+                        .map(p -> p.getTimestamp().toString())
+                        .collect(Collectors.toList());
+            }
+        } else {
+            List<Double> brutas = leiturasCondominio.getOrDefault(chaveRes, List.of());
+            leiturasValidas = brutas.stream()
+                    .filter(v -> v != null && Double.isFinite(v) && v >= 0.0)
+                    .collect(Collectors.toList());
+        }
 
         if (leiturasValidas.size() < MIN_LEITURAS_ANALISE) {
             return AnaliseVazamentoResponseDTO.dadosInsuficientes(residenciaId, leiturasValidas.size());
@@ -98,7 +143,8 @@ public class VazamentoService {
                 calculado.zMed,
                 calculado.zMax,
                 calculado.zStd,
-                leiturasValidas
+                leiturasValidas,
+                timestampsIso
         );
 
         InferenciaMlResponseDTO respostaMl;
@@ -111,7 +157,13 @@ public class VazamentoService {
             );
         }
 
-        return montarRespostaDiagnostico(residenciaId, leiturasValidas.size(), calculado, respostaMl);
+        return montarRespostaDiagnostico(
+                residenciaId,
+                leiturasValidas.size(),
+                calculado,
+                respostaMl,
+                serieTemporalRes
+        );
     }
 
     VetorFeaturesCalculado calcularFeaturesPadronizadas(
@@ -131,12 +183,21 @@ public class VazamentoService {
             }
         }
 
-        // Caso 1: Baseline empírico do condomínio disponível (>= 3 residências com dados suficientes)
+        // Caso 1: Baseline empírico do condomínio disponível (>= 3 residências com dados suficientes).
+        // Quando há >= 8 residências, apara os 20% maiores desvios para evitar que múltiplos vazamentos mascararem o baseline.
         if (perfisCondominio.size() >= 3) {
             EstatisticasDemanda atual = calcularEstatisticas(leiturasResidencia);
-            List<Double> listaMed = perfisCondominio.stream().map(p -> p.dMed).collect(Collectors.toList());
-            List<Double> listaMax = perfisCondominio.stream().map(p -> p.dMax).collect(Collectors.toList());
-            List<Double> listaStd = perfisCondominio.stream().map(p -> p.dStd).collect(Collectors.toList());
+            List<EstatisticasDemanda> referencia = perfisCondominio;
+            if (perfisCondominio.size() >= 8) {
+                List<EstatisticasDemanda> ordenadosPorStd = new ArrayList<>(perfisCondominio);
+                ordenadosPorStd.sort(Comparator.comparingDouble(p -> p.dStd));
+                int corte = Math.max(3, (int) Math.ceil(ordenadosPorStd.size() * 0.80));
+                referencia = ordenadosPorStd.subList(0, corte);
+            }
+
+            List<Double> listaMed = referencia.stream().map(p -> p.dMed).collect(Collectors.toList());
+            List<Double> listaMax = referencia.stream().map(p -> p.dMax).collect(Collectors.toList());
+            List<Double> listaStd = referencia.stream().map(p -> p.dStd).collect(Collectors.toList());
 
             double zMed = safeZScore(atual.dMed, media(listaMed), desvioPadraoAmostral(listaMed));
             double zMax = safeZScore(atual.dMax, media(listaMax), desvioPadraoAmostral(listaMax));
@@ -256,7 +317,8 @@ public class VazamentoService {
             Integer residenciaId,
             int quantidadeLeituras,
             VetorFeaturesCalculado calculado,
-            InferenciaMlResponseDTO respostaMl) {
+            InferenciaMlResponseDTO respostaMl,
+            List<LeituraTemporalDTO> serieTemporal) {
 
         AnaliseVazamentoResponseDTO dto = new AnaliseVazamentoResponseDTO();
         dto.setResidenciaId(residenciaId);
@@ -274,6 +336,14 @@ public class VazamentoService {
         dto.setProbabilidadeVazamento(prob);
         dto.setNivelRisco(risco);
         dto.setFeaturesUtilizadas(respostaMl.getFeaturesUtilizadas());
+
+        if (vazamento || prob >= 40.0) {
+            String inicioIndicio = respostaMl.getInicioIndicioVazamento();
+            if (inicioIndicio == null || inicioIndicio.isBlank()) {
+                inicioIndicio = identificarInicioIndicioLocal(serieTemporal);
+            }
+            dto.setInicioIndicioVazamento(inicioIndicio);
+        }
 
         if (vazamento && "Alto".equalsIgnoreCase(risco)) {
             dto.setStatus("Alerta: Provável Vazamento Detectado");
@@ -303,6 +373,69 @@ public class VazamentoService {
         }
 
         return dto;
+    }
+
+    String identificarInicioIndicioLocal(List<LeituraTemporalDTO> serieTemporal) {
+        if (serieTemporal == null || serieTemporal.size() < MIN_LEITURAS_ANALISE) {
+            return null;
+        }
+        List<Double> valores = serieTemporal.stream()
+                .map(LeituraTemporalDTO::getVolumeLitros)
+                .collect(Collectors.toList());
+
+        double mediana = percentil(valores, 50.0);
+        List<Double> desviosAbs = valores.stream()
+                .map(v -> Math.abs(v - mediana))
+                .collect(Collectors.toList());
+        double sigmaRob = Math.max(percentil(desviosAbs, 50.0) * 1.4826, 15.0);
+        double limiar = mediana + 2.2 * sigmaRob;
+
+        Integer onsetIdx = null;
+        int toleranciaQueda = 1;
+        for (int i = valores.size() - 1; i >= 0; i--) {
+            if (valores.get(i) >= limiar) {
+                onsetIdx = i;
+                toleranciaQueda = 1;
+            } else if (onsetIdx != null && toleranciaQueda > 0 && i > 0 && valores.get(i - 1) >= limiar) {
+                toleranciaQueda--;
+            } else if (onsetIdx != null) {
+                break;
+            }
+        }
+
+        if (onsetIdx == null) {
+            for (int i = 0; i < valores.size(); i++) {
+                if (valores.get(i) >= limiar) {
+                    onsetIdx = i;
+                    break;
+                }
+            }
+        }
+        if (onsetIdx == null) {
+            int maxIdx = 0;
+            for (int i = 1; i < valores.size(); i++) {
+                if (valores.get(i) > valores.get(maxIdx)) {
+                    maxIdx = i;
+                }
+            }
+            onsetIdx = maxIdx;
+        }
+
+        Instant ts = serieTemporal.get(onsetIdx).getTimestamp();
+        return ts != null ? FORMATADOR_INICIO_VAZAMENTO.format(ts) : null;
+    }
+
+    private static double percentil(List<Double> valores, double p) {
+        if (valores.isEmpty()) return 0.0;
+        List<Double> copia = new ArrayList<>(valores);
+        Collections.sort(copia);
+        double pos = (p / 100.0) * (copia.size() - 1);
+        int baseIdx = (int) Math.floor(pos);
+        double frac = pos - baseIdx;
+        if (baseIdx + 1 < copia.size()) {
+            return copia.get(baseIdx) + frac * (copia.get(baseIdx + 1) - copia.get(baseIdx));
+        }
+        return copia.get(baseIdx);
     }
 
     static EstatisticasDemanda calcularEstatisticas(List<Double> valores) {

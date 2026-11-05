@@ -119,4 +119,35 @@ class VazamentoServiceTest {
         assertEquals("Alto", resp.getNivelRisco());
         assertEquals(94.8, resp.getProbabilidadeVazamento());
     }
+
+    @Test
+    void deveIdentificarMomentoDeInicioDoIndicioDeVazamento() {
+        List<com.recantoceuazul.api.dto.LeituraTemporalDTO> serie = List.of(
+                new com.recantoceuazul.api.dto.LeituraTemporalDTO(java.time.Instant.parse("2026-10-27T12:00:00Z"), 410.0),
+                new com.recantoceuazul.api.dto.LeituraTemporalDTO(java.time.Instant.parse("2026-10-28T12:00:00Z"), 415.0),
+                new com.recantoceuazul.api.dto.LeituraTemporalDTO(java.time.Instant.parse("2026-10-29T12:00:00Z"), 408.0),
+                new com.recantoceuazul.api.dto.LeituraTemporalDTO(java.time.Instant.parse("2026-10-30T12:00:00Z"), 585.0),
+                new com.recantoceuazul.api.dto.LeituraTemporalDTO(java.time.Instant.parse("2026-10-31T12:00:00Z"), 595.0)
+        );
+        when(influxDbService.buscarUltimasLeiturasTemporaisCondominio(VazamentoService.LIMITE_JANELA_LEITURAS))
+                .thenReturn(Map.of("1", serie));
+
+        InferenciaMlResponseDTO mlResp = new InferenciaMlResponseDTO();
+        mlResp.setVazamentoDetectado(true);
+        mlResp.setClassePredita(1);
+        mlResp.setProbabilidadeVazamento(92.4);
+        mlResp.setNivelRisco("Alto");
+        mlResp.setFeaturesUtilizadas(Map.of("Z_D_Med", 1.25, "Z_D_Max", 1.5, "Z_D_Std", 2.75));
+
+        when(restTemplate.postForEntity(
+                eq("http://ml-service:8000/predict"),
+                any(HttpEntity.class),
+                eq(InferenciaMlResponseDTO.class)
+        )).thenReturn(new ResponseEntity<>(mlResp, HttpStatus.OK));
+
+        AnaliseVazamentoResponseDTO resp = vazamentoService.analisarVazamentoResidencia(1);
+
+        assertTrue(resp.isVazamentoDetectado());
+        assertEquals("30/10/2026 às 09:00", resp.getInicioIndicioVazamento());
+    }
 }
