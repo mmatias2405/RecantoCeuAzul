@@ -197,3 +197,33 @@ Para viabilizar a interoperabilidade entre o ecossistema Java Spring Boot e o ar
 
 #### 4. Apresentação Visual e Orientação ao Morador (`web`)
 Na aplicação web (`Spring Boot + Thymeleaf + Bootstrap 5`), o `HomeController` consome o diagnóstico preditivo de forma desacoplada e segura (com validação de sessão e proteção contra acesso indevido entre unidades — anti-IDOR), entregando os dados tanto na renderização inicial da página quanto por atualização assíncrona via `fetch` a cada 30 segundos ou sob demanda. No painel do morador (`dashboardMorador.html`), o componente **"Diagnóstico da Rede Hidráulica / Detecção de Vazamentos"** apresenta o resultado por codificação cromática semafórica (verde para *Rede Normal*, amarelo para *Risco Moderado* e vermelho para *Alerta: Provável Vazamento Detectado*), exibe a probabilidade percentual estimada pelo modelo em barra de progresso dinâmica e fornece recomendações práticas de inspeção predial, promovendo o uso racional de recursos hídricos e a mitigação rápida de perdas na rede interna.
+
+---
+
+## Etapa 6 — Rastreamento do Início do Indício de Vazamento e Reorganização UX do Histórico por Ano
+
+- **Data/Hora e Etapa**: `2026-11-05 09:42 BRT` — Etapa 6: Detecção Temporal do Início de Anomalia Hidráulica (`inicioIndicioVazamento`) no Pipeline ML/API e Reformulação da Experiência de Usuário (UX) por Ano no Painel do Morador.
+- **Arquivos Criados/Modificados**:
+  - `ml-service/predictor.py` (modificado — inclusão do algoritmo robusto por mediana e MAD para localizar o primeiro ponto de ruptura da série temporal e formatá-lo no fuso `America/Sao_Paulo`)
+  - `ml-service/app.py` (modificado — suporte ao vetor `timestampsLeituras` no contrato `PredictRequest` e exposição de `inicioIndicioVazamento` em `PredictResponse`)
+  - `api/src/main/java/com/recantoceuazul/api/dto/LeituraTemporalDTO.java` (criado — par imutável `timestamp` + `volumeLitros` extraído do InfluxDB)
+  - `api/src/main/java/com/recantoceuazul/api/dto/InferenciaMlRequestDTO.java` (modificado — envio de `timestampsLeituras` em ISO-8601)
+  - `api/src/main/java/com/recantoceuazul/api/dto/InferenciaMlResponseDTO.java` (modificado — recepção de `inicioIndicioVazamento`)
+  - `api/src/main/java/com/recantoceuazul/api/dto/AnaliseVazamentoResponseDTO.java` (modificado — adição do atributo `inicioIndicioVazamento` no payload REST da API)
+  - `api/src/main/java/com/recantoceuazul/api/service/InfluxDbService.java` (modificado — criação de `buscarUltimasLeiturasTemporaisCondominio(int)` preservando `_time` dos registros Flux)
+  - `api/src/main/java/com/recantoceuazul/api/service/VazamentoService.java` (modificado — ampliação de `LIMITE_JANELA_LEITURAS` para `40`, baseline aparado nos 80% perfis mais estáveis do condomínio para evitar mascaramento quando múltiplas casas apresentam vazamento simultâneo e cálculo local de contingência `identificarInicioIndicioLocal`)
+  - `api/src/test/java/com/recantoceuazul/api/service/VazamentoServiceTest.java` (modificado — adição do teste unitário `deveIdentificarMomentoDeInicioDoIndicioDeVazamento`)
+  - `web/src/main/java/com/recantoceuazul/web/dto/AnaliseVazamentoResponse.java` (modificado — mapeamento de `inicioIndicioVazamento`)
+  - `web/src/main/resources/static/customStyles.css` (modificado — estilos dos seletores por ano, KPIs do período, cards mensais compactos e selo temporal `.diagnostico-inicio-pill` dentro do quadro de probabilidade)
+  - `web/src/main/resources/templates/dashboardMorador.html` (modificado — nova barra superior de seleção de residência, seção de probabilidade com indicação explícita do momento de início das leituras anômalas e navegação de consolidações dividida por ano com gráfico e KPIs sincronizados)
+  - `web/src/test/java/com/recantoceuazul/web/controller/HomeControllerVazamentoViewTest.java` (modificado — asserções de renderização de `#diagnostico-inicio-indicio` e `#filtro-anos-tabs`)
+- **Decisões de Arquitetura e Implementação**:
+  - **Detecção estatística robusta do início do vazamento (`Mediana + MAD`)**: Quando a probabilidade de vazamento é relevante (`>= 40%` ou classe positiva `1`), analisa-se a série temporal da residência calculando um limiar resistente a *outliers* dado por $\text{Limiar} = \text{Mediana} + 2{,}2 \times \max(1{,}4826 \times \text{MAD},\; 15{,}0\text{ L})$. Identifica-se o início da sequência sustentada de leituras acima desse patamar ao final da janela recente, convertendo seu `_time` UTC para `dd/MM/yyyy às HH:mm` (`America/Sao_Paulo`).
+  - **Baseline coletivo aparado (Trimmed Baseline 80%)**: Em cenários de condomínio com 8 ou mais unidades monitoradas, o `VazamentoService` ordena os perfis pelo desvio padrão amostral (`dStd`) e utiliza os 80% perfis mais estáveis como referência de normalidade, impedindo que a presença simultânea de 3 ou 4 residências com vazamento inflacione artificialmente o desvio padrão coletivo e reduza os *Z-Scores* reais.
+  - **Reorganização UX do Histórico Consolidado por Ano**: Com o crescimento do acervo de medições consolidadas (2025 e 2026), o `dashboardMorador.html` passou a agrupar os registros por ano (`2026`, `2025` e visão `Todos os anos`), selecionando automaticamente o ano mais recente e atualizando de forma reativa três indicadores-resumo (Consumo Acumulado no Período, Média Mensal e ÚltimoHidrometro Consolidado), o gráfico de linha `Chart.js` e a grade responsiva de cartões mensais.
+- **Validação/Testes Realizados**:
+  - `cd api && ./mvnw test`: **16 testes executados, 0 falhas** (incluindo validação de `inicioIndicioVazamento`).
+  - `cd web && ./mvnw test`: **2 testes executados, 0 falhas** (`MockMvc` validando a renderização Thymeleaf do selo temporal no quadro de probabilidade e das abas de filtro por ano).
+- **Hash/Mensagem do Commit Associado**:
+  - Commit API/ML: `9b0df10` — `feat(api): identifica momento inicial de indicio de vazamento nas leituras do influxdb`
+  - Commit UI/Web: `351cdd0` — `feat(ui): organiza historico por ano e exibe inicio do indicio de vazamento`
