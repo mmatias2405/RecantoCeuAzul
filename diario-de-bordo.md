@@ -268,4 +268,28 @@ Na aplicação web (`Spring Boot + Thymeleaf + Bootstrap 5`), o `HomeController`
   - Conferência em `GET /api/medicao/hoje/residencia/20` (`1458,5607 m³`), `GET /api/medicao/residencia/20` (`id=360`, `volumeAgua=1456.21`, `delta=12.25`) e `GET /api/medicao/media` (`10/2026` = `12,11 m³`).
 - **Hash/Mensagem do Commit Associado**:
   - Commit Dados: `4476e8e` — `chore(dados): consolida consumo de outubro de 2026 no mysql a partir do influxdb`
-  - Commit Documentação: `docs(diario): registra consolidacao de outubro de 2026 no mysql`
+  - Commit Documentação: `e30b811` — `docs(diario): registra consolidacao de outubro de 2026 no mysql`
+
+---
+
+## Etapa 9 — Telemetria Granular Realista Estilo ESP32 e Agregação Diária no Backend
+
+- **Data/Hora e Etapa**: `2026-11-05 12:49 BRT` — Etapa 9: Refinamento da Telemetria no InfluxDB com Pulsos de 10 Segundos Típicos de Microcontrolador ESP32 e Atualização da Extração Flux no Spring Boot.
+- **Arquivos Criados/Modificados**:
+  - `api/src/main/java/com/recantoceuazul/api/service/InfluxDbService.java` (modificado — atualização das queries Flux `buscarUltimasLeiturasCondominio` e `buscarUltimasLeiturasTemporaisCondominio` com agregação por janela diária `1d` e `reduce`, preservando o primeiro timestamp do dia e compatibilizando pulsos de 10s com o modelo preditivo)
+  - `influxdb-init/dummy-data.lp` (modificado — substituição da telemetria das residências 101, 116, 120 e 105 por pulsos subdiários realistas em múltiplos de 10s, totalizando 94.438 registros)
+  - `diario-de-bordo.md` (modificado — documentação técnica da modelagem de pulsos e queries de apresentação)
+- **Decisões de Arquitetura e Implementação**:
+  - **Modelagem Realista de Pulsos ESP32 (`volume_litros > 0` a cada 10s)**:
+    - *Residências Normais (116 e 105)*: Padrão estritamente residencial com picos matutino (banho, café), almoço e noturno, com **silêncio absoluto na madrugada (00:00 às 06:25)** onde nenhum pacote é enviado ao Broker/InfluxDB.
+    - *Residência 101 (Ana Silva - Vazamento Alto, 93,8%)*: Fissura contínua em tubulação iniciada exatamente em `30/10/2026 às 03:15:00 BRT`, gerando pulsos ininterruptos de ~0,012 L a cada 10 segundos ininterruptamente durante a madrugada e o dia.
+    - *Residência 120 (Elisa Gomes - Vazamento Moderado, 63,3%)*: Vazamento cíclico por transbordamento/boia de caixa d'água ou válvula de descarga defeituosa iniciado em `02/11/2026 às 02:30:00 BRT`, disparando recargas periódicas a cada 10 minutos (~1,1 L em 6 pacotes de 10s) 24h por dia.
+  - **Compatibilização no Backend Spring Boot**:
+    - O modelo `.joblib` espera descritores diários padronizados ($Z_{D_{\text{Med}}}$, $Z_{D_{\text{Max}}}$, $Z_{D_{\text{Std}}}$). Para suportar a chegada de milhares de pacotes de 10s do ESP32 sem distorcer o cálculo de *Z-Score*, o `InfluxDbService` passou a consolidar a demanda por janela diária no próprio InfluxDB via `window(every: 1d)` + `reduce`, garantindo que o algoritmo localize o horário exato da madrugada em que a anomalia começou e preserve os mesmos diagnósticos validados.
+- **Validação/Testes Realizados**:
+  - Testes unitários do módulo API (`mvn test`): 16 testes executados com 100% de sucesso.
+  - Chamadas de teste nos endpoints ativos `GET /api/residencia/{1, 16, 20, 5}/vazamento` confirmando probabilidades idênticas e horários de início preservados (`30/10/2026 às 03:15` e `02/11/2026 às 02:30`).
+- **Hash/Mensagem do Commit Associado**:
+  - Commit API: `6de2b24` — `fix(api): agrega pulsos subdiarios do esp32 em janelas diarias para o modelo ml`
+  - Commit Dados: `7e60981` — `chore(dados): adiciona telemetria granular estilo esp32 para residencias 101, 116, 120 e 105`
+  - Commit Documentação: `docs(diario): registra modelagem de pulsos esp32 e queries graficas`
