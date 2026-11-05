@@ -118,3 +118,36 @@ Projeto: **Sistema Inteligente de Gestão Hídrica e Detecção de Vazamentos �
   - Execução completa de `./mvnw clean test` no módulo `api/`: compilação limpa em Java 17 e aprovação de 100% da suíte de testes (`15 tests, 0 failures, 0 errors`), incluindo os testes legados (`AtorControllerTest`, `MedicaoControllerTest`, etc.) e os novos testes unitários (`VazamentoControllerTest` e `VazamentoServiceTest`).
 - **Hash/Mensagem do Commit Associado**:
   - `a526efd` — `feat(api): cria endpoint e service para predicao de vazamento com dados do influxdb`
+
+
+---
+
+## Etapa 4 — Integração na Interface Web (Frontend Thymeleaf + Bootstrap)
+
+- **Data/Hora e Etapa**: `2026-11-04 21:39 BRT` — Etapa 4: Criação do Card Visual de Diagnóstico da Rede Hidráulica e Integração Dinâmica no Painel do Morador (`dashboardMorador.html`).
+- **Arquivos Criados/Modificados**:
+  - `web/src/main/java/com/recantoceuazul/web/dto/AnaliseVazamentoResponse.java` (criado)
+  - `web/src/main/java/com/recantoceuazul/web/controller/HomeController.java` (modificado — carregamento via `Model` em `/morador` e rota assíncrona `/residencia/{id}/vazamento` com proteção de sessão/IDOR)
+  - `web/src/main/resources/templates/dashboardMorador.html` (modificado — inclusão do componente visual de diagnóstico preditivo e atualização assíncrona via `fetch`)
+  - `web/src/main/resources/static/customStyles.css` (modificado — classes temáticas `.diagnostico-vazamento-card`, estados semafóricos e tipografia da probabilidade)
+  - `web/src/main/resources/application.properties` (modificado — valor *fallback* `http://localhost:8081/api/` em `api.url`)
+  - `web/src/test/java/com/recantoceuazul/web/controller/HomeControllerVazamentoViewTest.java` (criado)
+- **Decisões de Arquitetura e Implementação**:
+  1. **Análise da Interface Existente**:
+     - A camada web utiliza **Spring Boot MVC + Thymeleaf + Bootstrap 5.3.2 + Chart.js + CSS próprio (`customStyles.css`)**. A tela `dashboardMorador.html` é o ponto central onde o morador acompanha tanto o consumo em tempo real (`hidrometro-card`, atualizado a cada 30s) quanto o histórico consolidado mês a mês (cards mensais e gráfico comparativo).
+  2. **Integração Dupla (SSR via Thymeleaf `Model` + Atualização Assíncrona via `fetch`)**:
+     - No `HomeController.mostrarDashboardMorador`, a consulta `GET /api/residencia/{id}/vazamento` foi adicionada em um bloco `try/catch` isolado para garantir **não-regressão total**: qualquer indisponibilidade pontual do serviço preditivo faz *fallback* para `AnaliseVazamentoResponse.indisponivelPadrao()` sem afetar a exibição do hidrômetro digital ou do histórico mensal.
+     - Adicionada também a rota `GET /residencia/{id}/vazamento` (`@ResponseBody`) no `HomeController`, protegida por validação de sessão e verificação anti-IDOR (garantindo que moradores `MORAR` consultem apenas residências vinculadas ao seu cadastro), permitindo atualização dinâmica a cada 30 segundos e sob demanda pelo botão **"Atualizar Diagnóstico"**.
+  3. **Design Visual e Experiência do Morador (`dashboardMorador.html` + `customStyles.css`)**:
+     - Construído o card **"Diagnóstico da Rede Hidráulica / Detecção de Vazamentos"** seguindo o padrão visual de sombra, bordas arredondadas (`15px`) e paleta Bootstrap 5 do sistema:
+       - **Verde (`diagnostico-normal` / `text-success`)**: `"Rede Normal"` e badge `"Risco Baixo"`.
+       - **Amarelo/Âmbar (`diagnostico-moderado` / `text-warning`)**: alertas ou observações de `"Risco Moderado"`.
+       - **Vermelho (`diagnostico-alerta` / `text-danger`)**: `"Alerta: Provável Vazamento Detectado"` e badge `"Risco Alto"`.
+       - **Cinza/Informativo (`diagnostico-indisponivel` / `text-secondary`)**: `"Dados insuficientes para análise"` e badge `"Aguardando Leituras"`.
+     - Exibe em destaque a probabilidade calculada pelo modelo (`predict_proba` formatada em `%` no padrão `pt-BR` acompanhada de barra de progresso semafórica), a caixa **"Orientação ao Morador"** com recomendações práticas de inspeção hidráulica e os metadados de auditoria (quantidade de leituras avaliadas e horário da última verificação).
+- **Validação/Testes Realizados**:
+  - Build completo e empacotamento (`./mvnw clean package`) nos dois módulos (`web/` e `api/`) com `BUILD SUCCESS`.
+  - Criação e execução do teste `HomeControllerVazamentoViewTest` (`@WebMvcTest`) validando a renderização real do template Thymeleaf `dashboardMorador.html` com sessão autenticada de morador (`200 OK`, sem erros de expressões OGNL/SpringEL).
+  - Teste de fumaça HTTP com servidor `uvicorn` real respondendo aos contratos JSON consumidos pela aplicação.
+- **Hash/Mensagem do Commit Associado**:
+  - `0121010` — `feat(ui): exibe card de diagnostico e probabilidade de vazamento no painel do morador`
