@@ -151,3 +151,49 @@ Projeto: **Sistema Inteligente de Gestão Hídrica e Detecção de Vazamentos �
   - Teste de fumaça HTTP com servidor `uvicorn` real respondendo aos contratos JSON consumidos pela aplicação.
 - **Hash/Mensagem do Commit Associado**:
   - `0121010` — `feat(ui): exibe card de diagnostico e probabilidade de vazamento no painel do morador`
+
+
+---
+
+## Etapa 5 — Revisão Geral de Qualidade, Governança de Repositório e Síntese Acadêmica
+
+- **Data/Hora e Etapa**: `2026-11-04 21:40 BRT` — Etapa 5: Auditoria de `git status`/`git log`, Validação de Orquestração (`docker compose config`) e Redação do Resumo Executivo para o Relatório Acadêmico.
+- **Arquivos Criados/Modificados**:
+  - `diario-de-bordo.md` (modificado — inclusão da auditoria final e da seção `Resumo Executivo para o Relatório Acadêmico`)
+- **Decisões de Arquitetura e Implementação**:
+  - Revisada a árvore de trabalho (`git status` limpo, sem artefatos temporários `.pyc`, logs ou diretórios `target` versionados indevidamente).
+  - Validado o manifesto `docker-compose.yml` via `docker compose config -q`, confirmando a integridade sintática dos serviços `db`, `influxdb`, `ml-service`, `api` e `web`, das redes e dos *healthchecks*.
+  - Auditado o histórico de commits na branch `feat/integracao-ml-vazamentos`, assegurando aderência integral ao padrão *Conventional Commits* em português.
+- **Validação/Testes Realizados**:
+  - `git status`, `git log --oneline` e `docker compose config -q` executados sem alertas ou inconsistências.
+- **Hash/Mensagem do Commit Associado**:
+  - Mensagem: `docs(diario): adiciona resumo executivo para o relatorio academico`
+
+---
+
+## Resumo Executivo para o Relatório Acadêmico
+
+### Arquitetura e Fluxo Ponta a Ponta da Detecção Preditiva de Vazamentos Hídricos
+
+O módulo de detecção preditiva de vazamentos foi concebido e integrado à plataforma **Residencial Recanto do Céu Azul** com o objetivo de transformar dados brutos de telemetria hidrométrica em diagnósticos preventivos acionáveis para os moradores, preservando integralmente os fluxos já existentes de ingestão IoT via MQTT e consolidação faturável mensal em banco relacional MySQL.
+
+#### 1. Aquisição e Persistência em Série Temporal (ESP32 -> MQTT -> InfluxDB)
+Os sensores de vazão acoplados aos microcontroladores ESP32 publicam periodicamente leituras de consumo no Broker MQTT. O backend Java Spring Boot (`api`) atua como assinante desse tópico por meio do `MqttService` (`Spring Integration MQTT`), validando os payloads JSON (`residenciaId` e `volume_litros`) e persistindo cada medição positiva no banco de séries temporais **InfluxDB 2.8** (bucket `home`, *measurement* `consumo_agua`, tag `residenciaId` e field `volume_litros`).
+
+#### 2. Extração Estatística e Engenharia de Atributos no Backend (`api`)
+Quando o diagnóstico de uma unidade habitacional é requisitado nos endpoints `GET /api/residencia/{id}/vazamento` (ou `GET /api/residencias/{id}/vazamento`), o `VazamentoController` valida o cadastro da residência no MySQL e aciona o `VazamentoService`. Por meio de uma consulta em linguagem **Flux** executada pelo `InfluxDbService`, o sistema recupera as últimas leituras temporais registradas para as residências do condomínio (`sort(columns: ["_time"]) |> tail(n: 30)`).
+
+Caso a residência possua menos de três leituras válidas no InfluxDB, o serviço aplica degradação graciosa e retorna imediatamente o estado amigável `"Dados insuficientes para análise"`, evitando inferências estatisticamente inconsistentes. Havendo amostragem suficiente, calculam-se três descritores estatísticos do perfil recente de demanda em litros da unidade:
+- **Demanda Média ($D_{\text{Med}}$)**: tendência central do volume consumido na janela observada;
+- **Demanda Máxima ($D_{\text{Max}}$)**: pico de solicitação hidráulica registrado no período;
+- **Desvio Padrão da Demanda ($D_{\text{Std}}$)**: grau de dispersão e variabilidade do consumo.
+
+Para eliminar vieses decorrentes de diferenças estruturais de porte familiar entre unidades, essas grandezas são convertidas em escores padronizados (*Z-Scores*) — `Z_D_Med`, `Z_D_Max` e `Z_D_Std` — utilizando uma estratégia adaptativa em três níveis: (i) *baseline* empírico coletivo do condomínio quando há múltiplas residências ativas no InfluxDB; (ii) *baseline* histórico intra-residência por janelamento temporal em séries longas; ou (iii) parâmetros históricos de referência calibrados para o condomínio.
+
+#### 3. Inferência por Aprendizado de Máquina (`.joblib` em Microserviço Python FastAPI)
+O modelo preditivo pré-treinado (`modelo_rf_recomendado_api.joblib`) consiste em um classificador ensemble do tipo **`RandomForestClassifier`** (`Scikit-Learn`), composto por 100 árvores de decisão treinadas sobre 22.000 amostras rotuladas nas classes `0` (operação normal) e `1` (anomalia compatível com vazamento), tendo como atributos de entrada exatamente o trio `['Z_D_Med', 'Z_D_Max', 'Z_D_Std']`.
+
+Para viabilizar a interoperabilidade entre o ecossistema Java Spring Boot e o artefato Python `.joblib` com baixa latência e isolamento de dependências, implementou-se o microserviço containerizado **`ml-service`** (**Python 3.12 + FastAPI + Uvicorn**), orquestrado na rede interna `recantonet` do `docker-compose.yml` (com suporte complementar via CLI em ambientes locais de desenvolvimento). O modelo é carregado uma única vez em memória durante a inicialização do serviço (`lifespan`), expondo o endpoint interno `POST /predict`. A cada chamada, o serviço executa simultaneamente `predict()` (classificação binária) e `predict_proba()` (probabilidade percentual de vazamento da classe positiva), categorizando o risco hidráulico em **Baixo** (`< 40%`), **Moderado** (`40%` a `69,99%`) ou **Alto** (`>= 70%`).
+
+#### 4. Apresentação Visual e Orientação ao Morador (`web`)
+Na aplicação web (`Spring Boot + Thymeleaf + Bootstrap 5`), o `HomeController` consome o diagnóstico preditivo de forma desacoplada e segura (com validação de sessão e proteção contra acesso indevido entre unidades — anti-IDOR), entregando os dados tanto na renderização inicial da página quanto por atualização assíncrona via `fetch` a cada 30 segundos ou sob demanda. No painel do morador (`dashboardMorador.html`), o componente **"Diagnóstico da Rede Hidráulica / Detecção de Vazamentos"** apresenta o resultado por codificação cromática semafórica (verde para *Rede Normal*, amarelo para *Risco Moderado* e vermelho para *Alerta: Provável Vazamento Detectado*), exibe a probabilidade percentual estimada pelo modelo em barra de progresso dinâmica e fornece recomendações práticas de inspeção predial, promovendo o uso racional de recursos hídricos e a mitigação rápida de perdas na rede interna.
