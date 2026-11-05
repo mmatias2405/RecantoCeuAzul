@@ -84,3 +84,37 @@ Projeto: **Sistema Inteligente de Gestão Hídrica e Detecção de Vazamentos �
   - Testes automatizados dos endpoints HTTP FastAPI via `TestClient` validando `GET /health` (`200 OK`), `POST /predict` com série normal (`3.83%`, `Baixo`), `POST /predict` com pico anômalo de vazamento (`95.05%`, `Alto`) e tratamento de dados insuficientes (`422 Unprocessable Entity`).
 - **Hash/Mensagem do Commit Associado**:
   - `e22698b` — `feat(ml): adiciona microservico fastapi e cli de inferencia para o modelo joblib`
+
+
+---
+
+## Etapa 3 — Integração no Backend Spring Boot (`InfluxDB` -> `Modelo ML` -> `Endpoint API`)
+
+- **Data/Hora e Etapa**: `2026-11-04 21:35 BRT` — Etapa 3: Extração de Séries Temporais do InfluxDB, Engenharia de Features (`Z_D_Med`, `Z_D_Max`, `Z_D_Std`), Integração com Camada ML e Exposição REST.
+- **Arquivos Criados/Modificados**:
+  - `api/src/main/java/com/recantoceuazul/api/dto/AnaliseVazamentoResponseDTO.java` (criado)
+  - `api/src/main/java/com/recantoceuazul/api/dto/InferenciaMlRequestDTO.java` (criado)
+  - `api/src/main/java/com/recantoceuazul/api/dto/InferenciaMlResponseDTO.java` (criado)
+  - `api/src/main/java/com/recantoceuazul/api/service/InfluxDbService.java` (modificado — adição do método `buscarUltimasLeiturasCondominio`)
+  - `api/src/main/java/com/recantoceuazul/api/service/VazamentoService.java` (criado)
+  - `api/src/main/java/com/recantoceuazul/api/controller/VazamentoController.java` (criado)
+  - `api/src/main/resources/application.properties` (modificado — adição de `ml.service.url` e `ml.python.bin`)
+  - `api/src/main/resources/application-dev.properties.example` (modificado — adição de `ml.service.url`)
+  - `api/src/test/java/com/recantoceuazul/api/controller/VazamentoControllerTest.java` (criado)
+  - `api/src/test/java/com/recantoceuazul/api/service/VazamentoServiceTest.java` (criado)
+- **Decisões de Arquitetura e Implementação**:
+  1. **Query Flux no InfluxDB (`InfluxDbService.buscarUltimasLeiturasCondominio`)**:
+     - Consulta o bucket configurado (`${influx.bucket}`, padrão `home`) recuperando as últimas `N = 30` leituras válidas (`|> sort(columns: ["_time"]) |> tail(n: 30)`) de `volume_litros` no measurement `consumo_agua`, agrupadas por `residenciaId` na janela de `-365d`. Essa modelagem garante compatibilidade simultânea com telemetria MQTT em tempo real e com cargas históricas de homologação (`dummy-data.lp`), sem afetar os métodos existentes `processarMensagemMqtt`, `medicoesDoMesPassado` e `getConsumoHoje`.
+  2. **Cálculo de Estatísticas e Padronização Z-Score (`VazamentoService`)**:
+     - Exige um mínimo de `3` leituras válidas (`MIN_LEITURAS_ANALISE = 3`) para a residência avaliada. Caso haja menos de 3 pontos no InfluxDB, retorna imediatamente `AnaliseVazamentoResponseDTO.dadosInsuficientes(...)` com `analiseDisponivel = false`, `status = "Dados insuficientes para análise"`, `probabilidadeVazamento = 0.0` e mensagem orientativa amigável, sem invocar desnecessariamente o motor ML.
+     - Quando há leituras suficientes, calcula $D_{\text{Med}}$ (média amostral), $D_{\text{Max}}$ (máximo) e $D_{\text{Std}}$ (desvio padrão amostral) da residência e obtém o vetor padronizado `[Z_D_Med, Z_D_Max, Z_D_Std]` em três níveis adaptativos de referência:
+       1. *Baseline empírico do condomínio*: média e desvio padrão de $(D_{\text{Med}}, D_{\text{Max}}, D_{\text{Std}})$ entre as residências ativas ($\ge 3$ residências com dados no InfluxDB);
+       2. *Baseline histórico intra-residência*: subdivisão cronológica em janelas quando uma única residência possui série longa ($\ge 12$ leituras);
+       3. *Baseline residencial calibrado*: parâmetros históricos de referência do condomínio caso haja menos de 3 residências e série curta.
+  3. **Comunicação Resiliente com o Modelo e Contrato da API (`VazamentoController`)**:
+     - `VazamentoService` envia `POST ${ml.service.url}/predict` via `RestTemplate` (timeouts de 3s/5s) e possui *fallback* automático via `ProcessBuilder` para `ml-service/predictor.py` em ambiente local caso o container Python não esteja ativo.
+     - `VazamentoController` expõe `GET /api/residencia/{id}/vazamento` (compatível com o padrão singular `/api/residencia` já adotado em `ResidenciaController`) e o alias `GET /api/residencias/{id}/vazamento`, validando a existência da residência no MySQL (`404 Not Found` para IDs inexistentes, `400 Bad Request` para IDs inválidos e `200 OK` com `AnaliseVazamentoResponseDTO` para residências cadastradas).
+- **Validação/Testes Realizados**:
+  - Execução completa de `./mvnw clean test` no módulo `api/`: compilação limpa em Java 17 e aprovação de 100% da suíte de testes (`15 tests, 0 failures, 0 errors`), incluindo os testes legados (`AtorControllerTest`, `MedicaoControllerTest`, etc.) e os novos testes unitários (`VazamentoControllerTest` e `VazamentoServiceTest`).
+- **Hash/Mensagem do Commit Associado**:
+  - `a526efd` — `feat(api): cria endpoint e service para predicao de vazamento com dados do influxdb`
