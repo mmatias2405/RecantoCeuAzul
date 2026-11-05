@@ -33,5 +33,8 @@ influx.token=seu_token_gerado_no_influxdb_aqui
 influx.org=docs
 influx.bucket=home
 
+# --- Serviço de Machine Learning (Detecção Preditiva de Vazamentos) ---
+ml.service.url=http://localhost:8000
+
 # --- Porta da API ---
 server.port=8081
